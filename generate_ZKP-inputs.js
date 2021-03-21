@@ -23,8 +23,12 @@ const hash_alg = 1;
 //set DP noise parameters
 const delta = 1000000;    //define when magnitude of each b value (do not reduce bs!) is known: delta = b[i]_max - b[i]_min
 const epsilon = 1;  // delta / epsilon = lambda
-const p_acc = 100;  //must some power of 10
+const DP_acc = 100;  //must some power of 10
 const DP_hash_BC = BigInt("17758051187679994451203721828730993341951654331694709087352450464095838859238");
+
+//print size of input_public.json
+console.log("size of input_public.json:");
+console.log(1 + DP_acc-1 + 1 + 1 + 1 + k + k + 1 + k*k + k + k);
 
 
 //
@@ -143,7 +147,7 @@ const b_noisy = DP_noise.get_RandVar(
     y_round_pos,
     y_round_sign,
     DP_hash_BC,
-    p_acc,
+    DP_acc,
     delta,
     epsilon,
     dec,
@@ -154,10 +158,10 @@ const b_noisy_sign = b_noisy[1];
 
 //get random variables
 const P_tmp = [];
-for (let i = 1; i < p_acc; i++) {
+for (let i = 1; i < DP_acc; i++) {
     P_tmp[i-1] = i;
 }
-const Lap_X = DP_noise.calc_RandVar_round(delta, epsilon, P_tmp, p_acc);
+const Lap_X = DP_noise.calc_RandVar_round(delta, epsilon, P_tmp, DP_acc);
 
 let Lap_X_signify = signify(Lap_X);
 const Lap_X_pos = Lap_X_signify[0];
@@ -259,7 +263,7 @@ function writetofile() {
     }
 
     //write in_DP_sig_acc
-    file.write("  \"in_DP_sig_acc\": " + p_acc + ",\n");
+    file.write("  \"in_DP_sig_acc\": " + DP_acc + ",\n");
 
     //write in_hash_BC
     file.write("  \"in_hash_BC\": \"" + DP_hash_BC + "\",\n");

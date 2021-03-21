@@ -1,6 +1,6 @@
-include "merkleproof.circom";
-include "xx_rangeproof.circom";
-include "b_rangeproof.circom";
+include "./mycircomlib/merkleproof.circom";
+include "./mycircomlib/xx_rangeproof.circom";
+include "./mycircomlib/b_rangeproof.circom";
 
 //k = 4, n = 20
 //MiMC7: XX constraints
@@ -23,7 +23,7 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step, hash_alg, DP_acc) 
     //public inputs:
     signal input in_xy_merkleroot;
     signal input in_Lap_X_pos[DP_acc - 1];
-    signal input in_DP_sig_acc;
+    signal input in_DP_acc;
     signal input in_hash_BC;
     signal input range_acc_abs;
     signal input in_b_noisy_true_pos[k][1];
@@ -120,7 +120,7 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step, hash_alg, DP_acc) 
         b_rangeproof.in_Lap_X_pos[i] <== in_Lap_X_pos[i];
     }
     b_rangeproof.in_hash_BC <== in_hash_BC;
-    b_rangeproof.in_DP_sig_acc <== in_DP_sig_acc;
+    b_rangeproof.in_DP_sig_acc <== in_DP_acc;
     for (var j = 0; j < k; j++) {
         b_rangeproof.in_b_noisy_true_pos[j][0] <== in_b_noisy_true_pos[j][0];
         b_rangeproof.in_b_noisy_true_sign[j][0] <== in_b_noisy_true_sign[j][0];
