@@ -1,23 +1,23 @@
-include "../../../../circomlib/circuits/gates.circom";
-include "matrixmult.circom";
-include "range.circom";
-include "abs_diff.circom";
-include "DP_noise.circom";
-include "matrixnorms.circom";
+include "../../../circomlib/circuits/gates.circom";
+include "./mycircomlib/matrixmult.circom";
+include "./mycircomlib/range.circom";
+include "./mycircomlib/abs_diff.circom";
+include "./mycircomlib/DP_noise.circom";
+include "./mycircomlib/matrixnorms.circom";
 
 
-template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
-    signal input in_x_pos[k][n];
-    signal input in_x_sign[k][n];
-    signal input in_xx_inv_pos[k][k];
-    signal input in_xx_inv_sign[k][k];
-    signal input in_y_pos[n][1];
-    signal input in_y_sign[n][1];
+template b_RangeProof(k, n, acc_step, hash_alg, DP_acc) {
+    signal private input in_x_pos[k][n];
+    signal private input in_x_sign[k][n];
+    signal private input in_xx_inv_pos[k][k];
+    signal private input in_xx_inv_sign[k][k];
+    signal private input in_y_pos[n][1];
+    signal private input in_y_sign[n][1];
     //public inputs:
     signal input in_Lap_X_pos[DP_acc - 1];
-    signal input in_DP_sig_acc;
     signal input in_hash_BC;
     signal input range_acc_abs;
+    signal input in_DP_sig_acc;
     signal input in_b_noisy_true_pos[k][1];
     signal input in_b_noisy_true_sign[k][1];
     //outputs:
@@ -92,7 +92,7 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
 
     // calculate range per element
     component b_diff[k] = AbsDiff(bits);
-    component b_range[k] = Range(range_acc_step, bits);
+    component b_range[k] = Range(acc_step, bits);
     for (var j = 0; j < k; j++) {
         assert (DP_noise.out_b_sign[j][0] == in_b_noisy_true_sign[j][0]);
 
@@ -106,13 +106,16 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
     }
 
     // get smallest element
-    component minelement = VectorNormMinElement(k, dec);
+    component minelement = NormMinElement(k, k, dec);
     for (var j = 0; j < k; j++) {
-        minelement.in[j] <== b_range[j].out;
+        for (var i = 0; i < k; i++) {
+            minelement.in[j][i] <== range[j][i].out;
+        }
     }
 
     //assign output
-    check_b_noisy_minacc <== b_range.out;
+    check_b_noisy_minacc <==
+    b_range[j].out;
 
     //check sign
     for (var j = 0; j < k; j++) {
@@ -121,5 +124,4 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
 
 }
 
-//component main = b_RangeProof(4, 20, 10, 1, 5, 100);
-//cf. b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc)
+//component main = b_RangeProof(4, 20, 6, 50);

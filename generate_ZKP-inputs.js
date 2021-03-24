@@ -249,6 +249,9 @@ function writetofile() {
     //public inputs
     //
 
+    //write k
+    file.write("  \"in_k\": " + k + ",\n");
+
     //write merkle root
     file.write("  \"in_xy_merkleroot\": \"" + tree.root + "\",\n");
 
@@ -263,7 +266,7 @@ function writetofile() {
     }
 
     //write in_DP_sig_acc
-    file.write("  \"in_DP_sig_acc\": " + DP_acc + ",\n");
+    file.write("  \"in_DP_acc\": " + DP_acc + ",\n");
 
     //write in_hash_BC
     file.write("  \"in_hash_BC\": \"" + DP_hash_BC + "\",\n");
