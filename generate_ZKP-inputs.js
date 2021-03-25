@@ -26,9 +26,14 @@ const epsilon = 1;  // delta / epsilon = lambda
 const DP_acc = 100;  //must some power of 10
 const DP_hash_BC = BigInt("17758051187679994451203721828730993341951654331694709087352450464095838859238");
 
+//set accuracies for range proofs
+const require_XX_acc = 4;
+const require_XX_inv_maxnorm = 0.5 * k * 10**(dec);
+const require_b_noisy_acc = 4;
+
 //print size of input_public.json
 console.log("size of input_public.json:");
-console.log(1 + DP_acc-1 + 1 + 1 + 1 + k + k + 1 + k*k + k + k);
+console.log(1 + 1 + DP_acc-1 + 1 + 1 + k + k + 1 + 1 + 1);
 
 
 //
@@ -271,9 +276,6 @@ function writetofile() {
     //write in_hash_BC
     file.write("  \"in_hash_BC\": \"" + DP_hash_BC + "\",\n");
 
-    //write range_acc_abs
-    file.write("  \"range_acc_abs\": " + 10**(3*dec) + ",\n");
-
     //write b_NOISY_POS
     file.write("  \"in_b_noisy_true_pos\": [ ");
     for (var j = 0; j < b_noisy_pos.length; j++) {
@@ -293,10 +295,18 @@ function writetofile() {
             file.write("[" + b_noisy_sign[j] + "]");
         }
     }
-    file.write(" ]\n");
+    file.write(" ],\n");
+
+    //write require_XX_acc
+    file.write("  \"in_require_XX_acc\": " + require_XX_acc + ",\n");
+
+    //write require_XX_inv_maxnorm
+    file.write("  \"in_require_XX_inv_maxnorm\": " + require_XX_inv_maxnorm + ",\n");
+
+    //write require_b_noisy_acc
+    file.write("  \"in_require_b_noisy_acc\": " + require_b_noisy_acc + "\n");
 
     file.write("}");
-
     file.end();
 }
 

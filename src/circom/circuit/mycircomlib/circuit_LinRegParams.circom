@@ -2,6 +2,8 @@ include "./mycircomlib/merkleproof.circom";
 include "./mycircomlib/xx_rangeproof.circom";
 include "./mycircomlib/b_rangeproof.circom";
 include "./mycircomlib/matrixnorms.circom";
+include "./mycircomlib/power.circom";
+include "../../../circomlib/circuits/comparators.circom";
 
 //k = 4, n = 20, range_acc_step = 10
 //MiMC7: XX constraints
@@ -14,7 +16,7 @@ include "./mycircomlib/matrixnorms.circom";
 /////////////////////////////////////////////////
 
 
-template LinRegProof(k, n, dec, merkle_level, range_acc_step, hash_alg, DP_acc) {
+template LinRegProof(k, n, dec, merkle_level, range_acc_step_XX, range_acc_step_b_noisy, hash_alg, DP_acc) {
     signal private input in_x_pos[k][n];
     signal private input in_x_sign[k][n];
     signal private input in_y_pos[n][1];
@@ -27,13 +29,11 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step, hash_alg, DP_acc) 
     signal input in_Lap_X_pos[DP_acc - 1];
     signal input in_DP_acc;
     signal input in_hash_BC;
-    signal input range_acc_abs;
     signal input in_b_noisy_true_pos[k][1];
     signal input in_b_noisy_true_sign[k][1];
-    //outputs:
-    signal output check_XX_minacc;
-    signal output XX_inv_matrixnorm;
-    signal output check_b_noisy_minacc;
+    signal input in_require_XX_acc;
+    signal input in_require_XX_inv_maxnorm;
+    signal input in_require_b_noisy_acc;
 
 
     //
@@ -62,7 +62,13 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step, hash_alg, DP_acc) 
     // 2. step | XX range proof
     //
 
-    component XX_rangeproof = XX_RangeProof(k, n, range_acc_step, dec);
+    //calculate range_acc_abs
+    component power = Power(dec*3);
+    power.base <== 10;
+    signal range_acc_abs <== power.out;
+
+    //XX range proof
+    component XX_rangeproof = XX_RangeProof(k, n, range_acc_step_XX, dec);
 
     //assign inputs
     for (var j = 0; j < k; j++) {
@@ -79,27 +85,47 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step, hash_alg, DP_acc) 
     }
     XX_rangeproof.range_acc_abs <== range_acc_abs;
 
-    //get output
-    check_XX_minacc <== XX_rangeproof.check_XX_minacc;
+    //check output
+    var bits_range_XX_acc = 0;
+    while (2**bits_range_XX_acc < range_acc_step_XX) {
+        bits_range_XX_acc++;
+    }
+    component range_XX_acc = GreaterEqThan(bits_range_XX_acc);
+    range_XX_acc.in[0] <== XX_rangeproof.check_XX_minacc;
+    range_XX_acc.in[1] <== in_require_XX_acc;
+    1 === range_XX_acc.out;
 
 
     //
-    // 3. step | get max element matrix norm for XX_inv
+    // 3. step | range proof max element matrix norm for XX_inv
     //
 
+    //get max element
     component maxelement_XX_inv_pos = NormMaxElement(k, k, dec);
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
             maxelement_XX_inv_pos.in[j][i] <== in_xx_inv_pos[j][i];
         }
     }
-    XX_inv_matrixnorm <== in_k * maxelement_XX_inv_pos.out;
+
+    //check range
+    var bits_range_XX_inv_norm = 0;
+    while (2**bits_range_XX_inv_norm < 10**(2*dec)) {
+        bits_range_XX_inv_norm++;
+    }
+    component range_XX_inv_norm = LessEqThan(bits_range_XX_inv_norm);
+    range_XX_inv_norm.in[0] <== in_k * maxelement_XX_inv_pos.out;
+    range_XX_inv_norm.in[1] <== in_require_XX_inv_maxnorm;
+
+    //make sure that in_k * maxelement_XX_inv_pos.out <= in_require_XX_inv_maxnorm;
+    1 === range_XX_inv_norm.out;
+
 
     //
     // 4. step | b range proof
     //
 
-    component b_rangeproof = b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc);
+    component b_rangeproof = b_RangeProof(k, n, range_acc_step_b_noisy, hash_alg, dec, DP_acc);
 
     //assign inputs
     for (var j = 0; j < k; j++) {
@@ -129,9 +155,16 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step, hash_alg, DP_acc) 
         b_rangeproof.in_b_noisy_true_sign[j][0] <== in_b_noisy_true_sign[j][0];
     }
 
-    //get output
-    check_b_noisy_minacc <== b_rangeproof.check_b_noisy_minacc;
+    //check output
+    var bits_range_b_noisy_acc = 0;
+    while (2**bits_range_b_noisy_acc < range_acc_step_b_noisy) {
+        bits_range_b_noisy_acc++;
+    }
+    component range_b_noisy_acc = GreaterEqThan(range_acc_step_b_noisy);
+    range_b_noisy_acc.in[0] <== b_rangeproof.check_b_noisy_minacc;
+    range_b_noisy_acc.in[1] <== in_require_b_noisy_acc;
+    1 === range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(4, 20, 5, 7, 10, 1, 100);
-//cf. LinRegProof(k, n, dec, merkle_level, range_acc_step, hash_alg, DP_acc)
+component main = LinRegProof(4, 20, 5, 7, 4, 6, 1, 100);
+//cf. LinRegProof(k, n, dec, merkle_level, range_acc_step_XX, range_acc_step_b_noisy, hash_alg, DP_acc)
