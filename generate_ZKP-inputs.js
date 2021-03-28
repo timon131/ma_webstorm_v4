@@ -33,7 +33,7 @@ const require_b_noisy_acc = 4;
 
 //print size of input_public.json
 console.log("size of input_public.json:");
-console.log(1 + 1 + DP_acc-1 + 1 + 1 + k + k + 1 + 1 + 1);
+console.log(1 + 1 + 1 + 1 + DP_acc-1 + 1 + 1 + k + k + 1 + 1 + 1);
 
 
 //
@@ -256,6 +256,12 @@ function writetofile() {
 
     //write k
     file.write("  \"in_k\": " + k + ",\n");
+
+    //write n
+    file.write("  \"in_n\": " + n + ",\n");
+
+    //write dec
+    file.write("  \"in_dec\": " + dec + ",\n");
 
     //write merkle root
     file.write("  \"in_xy_merkleroot\": \"" + tree.root + "\",\n");

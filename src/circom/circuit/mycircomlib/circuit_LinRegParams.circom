@@ -16,7 +16,7 @@ include "../../../circomlib/circuits/comparators.circom";
 /////////////////////////////////////////////////
 
 
-template LinRegProof(k, n, dec, merkle_level, range_acc_step_XX, range_acc_step_b_noisy, hash_alg, DP_acc) {
+template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_b_noisy_acc, hash_alg, DP_acc) {
     signal private input in_x_pos[k][n];
     signal private input in_x_sign[k][n];
     signal private input in_y_pos[n][1];
@@ -25,6 +25,8 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step_XX, range_acc_step_
     signal private input in_xx_inv_sign[k][k];
     //public inputs:
     signal input in_k;
+    signal input in_n;
+    signal input in_dec;
     signal input in_xy_merkleroot;
     signal input in_Lap_X_pos[DP_acc - 1];
     signal input in_DP_acc;
@@ -34,6 +36,19 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step_XX, range_acc_step_
     signal input in_require_XX_acc;
     signal input in_require_XX_inv_maxnorm;
     signal input in_require_b_noisy_acc;
+
+    //
+    // 0. step | Prerequisites: make sure that input variables are correct
+    //
+
+    assert (
+        k == in_k &&
+        n == in_n &&
+        dec == in_dec &&
+        require_XX_acc == in_require_XX_acc &&
+        require_b_noisy_acc == in_require_b_noisy_acc &&
+        DP_acc == in_DP_acc
+    );
 
 
     //
@@ -68,7 +83,7 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step_XX, range_acc_step_
     signal range_acc_abs <== power.out;
 
     //XX range proof
-    component XX_rangeproof = XX_RangeProof(k, n, range_acc_step_XX, dec);
+    component XX_rangeproof = XX_RangeProof(k, n, require_XX_acc, dec);
 
     //assign inputs
     for (var j = 0; j < k; j++) {
@@ -87,7 +102,7 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step_XX, range_acc_step_
 
     //check output
     var bits_range_XX_acc = 0;
-    while (2**bits_range_XX_acc < range_acc_step_XX) {
+    while (2**bits_range_XX_acc < require_XX_acc) {
         bits_range_XX_acc++;
     }
     component range_XX_acc = GreaterEqThan(bits_range_XX_acc);
@@ -125,7 +140,7 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step_XX, range_acc_step_
     // 4. step | b range proof
     //
 
-    component b_rangeproof = b_RangeProof(k, n, range_acc_step_b_noisy, hash_alg, dec, DP_acc);
+    component b_rangeproof = b_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc);
 
     //assign inputs
     for (var j = 0; j < k; j++) {
@@ -157,14 +172,14 @@ template LinRegProof(k, n, dec, merkle_level, range_acc_step_XX, range_acc_step_
 
     //check output
     var bits_range_b_noisy_acc = 0;
-    while (2**bits_range_b_noisy_acc < range_acc_step_b_noisy) {
+    while (2**bits_range_b_noisy_acc < require_b_noisy_acc) {
         bits_range_b_noisy_acc++;
     }
-    component range_b_noisy_acc = GreaterEqThan(range_acc_step_b_noisy);
+    component range_b_noisy_acc = GreaterEqThan(require_b_noisy_acc);
     range_b_noisy_acc.in[0] <== b_rangeproof.check_b_noisy_minacc;
     range_b_noisy_acc.in[1] <== in_require_b_noisy_acc;
     1 === range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(4, 20, 5, 7, 4, 6, 1, 100);
-//cf. LinRegProof(k, n, dec, merkle_level, range_acc_step_XX, range_acc_step_b_noisy, hash_alg, DP_acc)
+component main = LinRegProof(4, 20, 5, 7, 4, 4, 1, 100);
+//cf. LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_b_noisy_acc, hash_alg, DP_acc)
