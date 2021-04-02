@@ -5,13 +5,13 @@ include "./mycircomlib/matrixnorms.circom";
 include "./mycircomlib/power.circom";
 include "../../../circomlib/circuits/comparators.circom";
 
-//k = 4, n = 20, range_acc_step = 10
-//MiMC7: XX constraints
-//Poseidon: 41824 constraints | generate-zkey: XX | prove-validate: XX
-
-//k = 4, n = 50
-//MiMC7: XX constraints
+//k = 4, n = 20, range_acc = 10
+//MiMC7: ~41000 constraints
 //Poseidon: XX constraints | generate-zkey: XX | prove-validate: XX
+
+//k = 4, n = 50, range_acc = 4
+//MiMC7: XX constraints
+//Poseidon: 76730 constraints | generate-zkey: XX | prove-validate: XX
 
 /////////////////////////////////////////////////
 
@@ -181,5 +181,5 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_b_noisy_ac
     1 === range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(4, 20, 5, 7, 4, 4, 1, 100);
+component main = LinRegProof(4, 50, 5, 8, 3, 3, 1, 100);
 //cf. LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_b_noisy_acc, hash_alg, DP_acc)

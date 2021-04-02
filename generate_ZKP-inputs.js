@@ -12,7 +12,7 @@ const fs = require ("fs");
 
 // define number of features k and sample size n
 const k = 4;
-const n = 20;
+const n = 50;
 
 // define accuracy dec (10**dec)
 const dec = 5;
@@ -41,7 +41,7 @@ console.log(1 + 1 + 1 + 1 + DP_acc-1 + 1 + 1 + k + k + 1 + 1 + 1);
 //
 
 //generate random input data x and y
-const data = data_prep.prepare_data(k, n);
+const data = data_prep.prepare_randomdata(k, n);
 const x = data[0];
 const y = data[1];
 //steady input:
