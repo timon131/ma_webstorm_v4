@@ -4,9 +4,10 @@ include "range.circom";
 include "abs_diff.circom";
 include "DP_noise.circom";
 include "matrixnorms.circom";
+include "power.circom";
 
 
-template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
+template b_noisy_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
     signal input in_x_pos[k][n];
     signal input in_x_sign[k][n];
     signal input in_y_pos[n][1];
@@ -96,6 +97,7 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
     component b_diff[k] = AbsDiff(bits);
     component b_range[k] = Range(range_acc_step, bits);
     for (var j = 0; j < k; j++) {
+        //check sign
         DP_noise.out_b_sign[j][0] === in_b_noisy_true_sign[j][0];
 
         //calculate difference
@@ -114,13 +116,102 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
     }
 
     //assign output
-    check_b_noisy_minacc <== b_range.out;
+    check_b_noisy_minacc <== minelement.out;
+}
 
-    //check sign
+////////////////////////////////////////////////
+
+template b_RangeProof(k, n, range_acc_step, hash_alg, dec) {
+    signal input in_x_pos[k][n];
+    signal input in_x_sign[k][n];
+    signal input in_y_pos[n][1];
+    signal input in_y_sign[n][1];
+    signal input in_b_true_pos[k][1];
+    signal input in_b_true_sign[k][1];
+    signal input in_xx_inv_pos[k][k];
+    signal input in_xx_inv_sign[k][k];
+    //public inputs:
+    signal input range_acc_abs;
+    //outputs:
+    signal output check_b_minacc;
+
+
+    //
+    // 1. step | multiply: XXX (k x n) = INV_X (k x k) * X (k x n)
+    //
+
+    component XXX_mult = MatrixMult(k, k, n);
+    //assign inputs
     for (var j = 0; j < k; j++) {
-        in_b_noisy_true_sign[j][0] === DP_noise.out_b_sign[j][0];
+        for (var i = 0; i < k; i++) {
+            XXX_mult.in_a[j][i] <== in_xx_inv_pos[j][i];
+            XXX_mult.in_a_sign[j][i] <== in_xx_inv_sign[j][i];
+        }
+    }
+    for (var j = 0; j < k; j++) {
+        for (var i = 0; i < n; i++) {
+            XXX_mult.in_b[j][i] <== in_x_pos[j][i];
+            XXX_mult.in_b_sign[j][i] <== in_x_sign[j][i];
+        }
     }
 
+
+    //
+    // 2. step | multiply: b (k x 1) = XXX (k x n) * y (n x 1)
+    //
+
+    component b_mult = MatrixMult(n, k, 1);
+    //assign inputs
+    for (var j = 0; j < k; j++) {
+        for (var i = 0; i < n; i++) {
+            b_mult.in_a[j][i] <== XXX_mult.out[j][i];
+            b_mult.in_a_sign[j][i] <== XXX_mult.out_sign[j][i];
+        }
+    }
+    for (var i = 0; i < n; i++) {
+        b_mult.in_b[i][0] <== in_y_pos[i][0];
+        b_mult.in_b_sign[i][0] <== in_y_sign[i][0];
+    }
+
+
+    //
+    // 3. step | range proof b
+    //
+
+    //calculate bits
+    var bits = 0;
+    while (2**bits < 10**((dec * 3) + 1)) {
+        bits++;
+    }
+
+    //calculate dec_abs
+    component dec_pow = Power(dec * 2);
+    dec_pow.base <== 10;
+
+    // calculate range per element
+    component b_diff[k] = AbsDiff(bits);
+    component b_range[k] = Range(range_acc_step, bits);
+    for (var j = 0; j < k; j++) {
+        //check sign
+        b_mult.out_sign[j][0] === in_b_true_sign[j][0];
+
+        //calculate difference
+        b_diff[j].in_a <== b_mult.out[j][0];
+        b_diff[j].in_b <== in_b_true_pos[j][0] * dec_pow.out;
+
+        //calculate range
+        b_range[j].truth <== b_diff[j].out;
+        b_range[j].test <== range_acc_abs;
+    }
+
+    // get smallest element
+    component minelement = VectorNormMinElement(k, dec);
+    for (var j = 0; j < k; j++) {
+        minelement.in[j] <== b_range[j].out;
+    }
+
+    //assign output
+    check_b_minacc <== minelement.out;
 }
 
 //component main = b_RangeProof(5, 20, 3, 1, 5, 100);

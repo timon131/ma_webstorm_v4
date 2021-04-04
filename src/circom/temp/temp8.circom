@@ -1,34 +1,38 @@
+//include "../../../circomlib/circuits/gates.circom";
 include "./mycircomlib/matrixmult.circom";
+include "./mycircomlib/multiply-xx.circom";
+//include "./mycircomlib/range.circom";
+//include "./mycircomlib/abs_diff.circom";
+//include "./mycircomlib/DP_noise.circom";
+//include "./mycircomlib/matrixnorms.circom";
 include "./mycircomlib/merkleproof.circom";
-include "./mycircomlib/b_rangeproof.circom";
+//include "./mycircomlib/xx_rangeproof.circom";
+//include "./mycircomlib/b_rangeproof.circom";
 include "./mycircomlib/power.circom";
+//include "../../../circomlib/circuits/comparators.circom";
 
 
 /////////////////////////////////////////////////
 
 
-template LinRegCost(k, n, n_test, dec, merkle_level_xy, merkle_level_test, hash_alg, require_b_acc) {
+template LinRegCost(k, n, n_test, dec, merkle_level, hash_alg) {
     signal private input in_x_pos[k][n];
     signal private input in_x_sign[k][n];
     signal private input in_y_pos[n][1];
     signal private input in_y_sign[n][1];
-    signal private input in_b_true_pos[k][1];
-    signal private input in_b_true_sign[k][1];
     signal private input in_xx_inv_pos[k][k];
     signal private input in_xx_inv_sign[k][k];
-    //public inputs:
     signal private input in_x_test_pos[k][n_test];
     signal private input in_x_test_sign[k][n_test];
     signal private input in_y_test_pos[n_test][1];
     signal private input in_y_test_sign[n_test][1];
+    //public inputs:
     signal input in_k;
     signal input in_n;
     signal input in_n_test;
     signal input in_dec;
     signal input in_xy_merkleroot;
-    signal input in_test_merkleroot;
-    signal input in_require_b_acc;
-    //output:
+
     signal output out;
 
 
@@ -40,15 +44,14 @@ template LinRegCost(k, n, n_test, dec, merkle_level_xy, merkle_level_test, hash_
         k == in_k &&
         n == in_n &&
         n_test == in_n_test &&
-        dec == in_dec &&
-        require_b_acc == in_require_b_acc
+        dec == in_dec
     );
 
     //
-    // 1. step | Check xy_merkleroot
+    // 1. step | Check x_merkleroot
     //
 
-    component xy_merkleproof = MerkleProof(k, n, merkle_level_xy, hash_alg);
+    component xy_merkleproof = MerkleProof(k, n, merkle_level, hash_alg);
 
     //assign inputs
     for (var j = 0; j < k; j++) {
@@ -67,72 +70,41 @@ template LinRegCost(k, n, n_test, dec, merkle_level_xy, merkle_level_test, hash_
 
 
     //
-    // 2. step | Check test_merkleroot
+    // 2. step | calculate b
     //
 
-    component test_merkleproof = MerkleProof(k, n_test, merkle_level_test, hash_alg);
-
+    // calculate XXX (k x n) = XX_INV (k x k) * X (k x n)
+    component XXX_mult = MatrixMult(k, k, n);
     //assign inputs
     for (var j = 0; j < k; j++) {
-        for (var i = 0; i < n_test; i++) {
-            test_merkleproof.in_x_pos[j][i] <== in_x_test_pos[j][i];
-            test_merkleproof.in_x_sign[j][i] <== in_x_test_sign[j][i];
+        for (var i = 0; i < k; i++) {
+            XXX_mult.in_a[j][i] <== in_xx_inv_pos[j][i];
+            XXX_mult.in_a_sign[j][i] <== in_xx_inv_sign[j][i];
         }
     }
-    for (var i = 0; i < n_test; i++) {
-        test_merkleproof.in_y_pos[i][0] <== in_y_test_pos[i][0];
-        test_merkleproof.in_y_sign[i][0] <== in_y_test_sign[i][0];
-    }
-
-    //make sure that root is correct
-    in_test_merkleroot === test_merkleproof.out;
-
-
-    //
-    // 3. step | range proof b
-    //
-
-    component b_rangeproof = b_RangeProof(k, n, require_b_acc, hash_alg, dec);
-
-    //assign inputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            b_rangeproof.in_x_pos[j][i] <== in_x_pos[j][i];
-            b_rangeproof.in_x_sign[j][i] <== in_x_sign[j][i];
+            XXX_mult.in_b[j][i] <== in_x_pos[j][i];
+            XXX_mult.in_b_sign[j][i] <== in_x_sign[j][i];
+        }
+    }
+
+    // calculate b (k x 1) = XXX (k x n) * y (n x 1)
+    component b_mult = MatrixMult(n, k, 1);
+    for (var j = 0; j < k; j++) {
+        for (var i = 0; i < n; i++) {
+            b_mult.in_a[j][i] <== XXX_mult.out[j][i];
+            b_mult.in_a_sign[j][i] <== XXX_mult.out_sign[j][i];
         }
     }
     for (var i = 0; i < n; i++) {
-        b_rangeproof.in_y_pos[i][0] <== in_y_pos[i][0];
-        b_rangeproof.in_y_sign[i][0] <== in_y_sign[i][0];
+        b_mult.in_b[i][0] <== in_y_pos[i][0];
+        b_mult.in_b_sign[i][0] <== in_y_sign[i][0];
     }
-    for (var j = 0; j < k; j++) {
-        b_rangeproof.in_b_true_pos[j][0] <== in_b_true_pos[j][0];
-        b_rangeproof.in_b_true_sign[j][0] <== in_b_true_sign[j][0];
-    }
-    for (var j = 0; j < k; j++) {
-        for (var i = 0; i < k; i++) {
-            b_rangeproof.in_xx_inv_pos[j][i] <== in_xx_inv_pos[j][i];
-            b_rangeproof.in_xx_inv_sign[j][i] <== in_xx_inv_sign[j][i];
-        }
-    }
-    // calculate dec helper
-    component dec_power_b_range = Power(dec * 3);
-    dec_power_b_range.base <== 10;
-    b_rangeproof.range_acc_abs <== dec_power_b_range.out;
-
-    //check output
-    var bits_range_b_true_acc = 0;
-    while (2**bits_range_b_true_acc < require_b_acc) {
-        bits_range_b_true_acc++;
-    }
-    component range_b_true_acc = GreaterEqThan(require_b_acc);
-    range_b_true_acc.in[0] <== b_rangeproof.check_b_minacc;
-    range_b_true_acc.in[1] <== in_require_b_acc;
-    1 === range_b_true_acc.out;
 
 
     //
-    // 4. step | compute y_est
+    // 3. step | compute y_est
     //
 
     // compute x_trans
@@ -154,18 +126,19 @@ template LinRegCost(k, n, n_test, dec, merkle_level_xy, merkle_level_test, hash_
         }
     }
     for (var j = 0; j < k; j++) {
-        y_est_mult.in_b[j][0] <== in_b_true_pos[j][0];
-        y_est_mult.in_b_sign[j][0] <== in_b_true_sign[j][0];
+        y_est_mult.in_b[j][0] <== b_mult.out[j][0];
+        y_est_mult.in_b_sign[j][0] <== b_mult.out_sign[j][0];
     }
 
 
     //
-    // 5. step | calculate cost
+    // 4. step | calculate cost
     //
 
     // calculate dec helper
-    component dec_power_y_test = Power(dec);
-    dec_power_y_test.base <== 10;
+    component dec_power = Power(4 * dec);
+    dec_power.base <== 10;
+    signal dec_pow <== dec_power.out;
 
     // calculate cost * n_test = ||(y_test - y_est)||2
     signal y_est[n_test];
@@ -176,7 +149,7 @@ template LinRegCost(k, n, n_test, dec, merkle_level_xy, merkle_level_test, hash_
         // make negative / positive
         y_est[i] <== y_est_mult.out[i][0] - (2 * y_est_mult.out_sign[i][0] * y_est_mult.out[i][0]);
         y_test_tmp[i] <== in_y_test_pos[i][0] - (2 * in_y_test_sign[i][0] * in_y_test_pos[i][0]);
-        y_test[i] <== y_test_tmp[i] * dec_power_y_test.out;
+        y_test[i] <== y_test_tmp[i] * dec_pow;
 
         // calculate cost
         cost_sum.in[i] <== (y_est[i] - y_test[i]) * (y_est[i] - y_test[i]);
@@ -192,5 +165,5 @@ template LinRegCost(k, n, n_test, dec, merkle_level_xy, merkle_level_test, hash_
 */
 }
 
-component main = LinRegCost(5, 20, 10, 7, 7, 6, 1, 3);
-//cf. LinRegCost(k, n, n_test, dec, merkle_level_xy, merkle_level_test, hash_alg, require_b_acc)
+component main = LinRegCost(5, 20, 20, 5, 7, 1);
+//cf. LinRegProof(k, n, n_test, dec, merkle_level, hash_alg)

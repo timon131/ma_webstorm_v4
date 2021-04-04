@@ -99,11 +99,9 @@ function calculate_params (x, y, k, n, dec) {
 
 
     return [
-        x_round,
         x_round_pos,
         x_round_sign,
 
-        y_round,
         y_round_pos,
         y_round_sign,
 
@@ -114,6 +112,63 @@ function calculate_params (x, y, k, n, dec) {
         b_round_sign
     ];
 }
+
+function prepare_data_test (x, y, k, n, dec) {
+
+    //console.log(x);
+    //console.log(y);
+
+
+    //
+    // 1. step | round
+    //
+
+    //round X: X_ROUND
+    var x_round = [];
+    for (var j = 0; j < k; j++) {
+        x_round[j] = [];
+        for (var i = 0; i < n; i++) {
+            x_round[j][i] = x[j][i].toFixed(dec);
+            x_round[j][i] = x_round[j][i] * 10 ** dec;
+            x_round[j][i] = Math.round(x_round[j][i]);
+        }
+    }
+
+    //round y: y_ROUND
+    var y_round = [];
+    for (var j = 0; j < n; j++) {
+        y_round[j] = [];
+        y_round[j][0] = y[j][0].toFixed(dec);
+        y_round[j][0] = y_round[j][0] * 10 ** dec;
+        y_round[j][0] = Math.round(y_round[j][0]);
+    }
+
+
+    //
+    // 2. step | create positive matrices with respective sign matrix
+    //
+
+    //x_round
+    var x_round_signify = signify(x_round);
+    var x_round_pos = x_round_signify[0];
+    var x_round_sign = x_round_signify[1];
+
+    //y_round
+    var y_round_signify = signify(y_round);
+    var y_round_pos = y_round_signify[0];
+    var y_round_sign = y_round_signify[1];
+
+
+    return [
+        x_round_pos,
+        x_round_sign,
+
+        y_round_pos,
+        y_round_sign,
+    ];
+}
+
+///////////////////////////////////
 
 function MatrixTranspose(a) {
     var a_rows = a.length;
@@ -161,5 +216,6 @@ function signify(x) {
 
 module.exports = {
     //functions:
-    calculate_params
+    calculate_params,
+    prepare_data_test
 }

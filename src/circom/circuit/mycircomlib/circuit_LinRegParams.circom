@@ -1,17 +1,15 @@
 include "../../../circomlib/circuits/gates.circom";
+include "../../../circomlib/circuits/comparators.circom";
 include "./mycircomlib/matrixmult.circom";
 include "./mycircomlib/range.circom";
 include "./mycircomlib/abs_diff.circom";
 include "./mycircomlib/DP_noise.circom";
 include "./mycircomlib/matrixnorms.circom";
-
-
 include "./mycircomlib/merkleproof.circom";
 include "./mycircomlib/xx_rangeproof.circom";
 include "./mycircomlib/b_rangeproof.circom";
-include "./mycircomlib/matrixnorms.circom";
 include "./mycircomlib/power.circom";
-include "../../../circomlib/circuits/comparators.circom";
+
 
 //k = 4, n = 20, range_acc = 10
 //MiMC7: ~41000 constraints
@@ -148,7 +146,7 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_b_noisy_ac
     // 4. step | b range proof
     //
 
-    component b_rangeproof = b_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc);
+    component b_rangeproof = b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc);
 
     //assign inputs
     for (var j = 0; j < k; j++) {

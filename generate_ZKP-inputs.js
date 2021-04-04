@@ -5,8 +5,8 @@ const DP_noise = require ("./DP_noise.js");
 const fs = require ("fs");
 
 ////////////////////////////////
-generate_ZKPinputs();
-async function generate_ZKPinputs() {
+generate_ZKPinputs(1);
+async function generate_ZKPinputs(l) {
 
     //
     // set parameters
@@ -19,6 +19,7 @@ async function generate_ZKPinputs() {
     let k = 4;
     k++;    //account for X: k+1 x n
     const n = 20;
+    const n_test = Math.round(n / 2);
 
     // define accuracy dec (10**dec)
     const dec = 5;
@@ -46,13 +47,11 @@ async function generate_ZKPinputs() {
     // execute
     //
 
-
-    //generate random input data x and y
-    const data = await data_prep.prepare_housing(csvFilePath, k, n);
+    //get input data x and y
+    const data = await data_prep.prepare_housing(csvFilePath, k, n, l);
     const x = data[0];
     const y = data[1];
     //steady input:
-
     /*
     const x =
         [
@@ -125,32 +124,37 @@ async function generate_ZKPinputs() {
         ];
     */
 
+    //get test data x and y
+    const data_test = await data_prep.prepare_housing_test(csvFilePath, k, n_test);
+    const data_test_round = params.prepare_data_test(data_test[0], data_test[1], k, n_test, dec);
+    const x_test_round_pos = data_test_round[0];
+    const x_test_round_sign = data_test_round[1];
+    const y_test_round_pos = data_test_round[2];
+    const y_test_round_sign = data_test_round[3];
+
 
     //generate LinReg params
     const get_params = params.calculate_params(x, y, k, n, dec);
 
-    const x_round = get_params[0];
-    const x_round_pos = get_params[1];
-    const x_round_sign = get_params[2];
+    const x_round_pos = get_params[0];
+    const x_round_sign = get_params[1];
 
-    const y_round = get_params[3];
-    const y_round_pos = get_params[4];
-    const y_round_sign = get_params[5];
+    const y_round_pos = get_params[2];
+    const y_round_sign = get_params[3];
 
-    const xx_inv_round_pos = get_params[6];
-    const xx_inv_round_sign = get_params[7];
+    const xx_inv_round_pos = get_params[4];
+    const xx_inv_round_sign = get_params[5];
 
-    const b_round_pos = get_params[8];
-    const b_round_sign = get_params[9];
+    const b_round_pos = get_params[6];
+    const b_round_sign = get_params[7];
 
-    console.log('b_round_pos: \n', b_round_pos);
-    console.log('b_round_sign: \n', b_round_sign);
 
-    //build merkle tree
-    const tree = build_merkle.build_merkletree(x_round_pos, x_round_sign, y_round_pos, y_round_sign, hash_alg);
+    //build merkle trees
+    const xy_tree = build_merkle.build_merkletree(x_round_pos, x_round_sign, y_round_pos, y_round_sign, hash_alg);
+    console.log("level xy: ", xy_tree.level);
 
-    console.log("level:");
-    console.log(tree.level);
+    const test_tree = build_merkle.build_merkletree(x_test_round_pos, x_test_round_sign, y_test_round_pos, y_test_round_sign, hash_alg);
+    console.log("level test: ", test_tree.level);
 
     //get b_noisy
     const b_noisy = DP_noise.get_RandVar(
@@ -177,285 +181,306 @@ async function generate_ZKPinputs() {
 
     let Lap_X_signify = signify(Lap_X);
     const Lap_X_pos = Lap_X_signify[0];
-    const Lap_X_sign = Lap_X_signify[1];
+    //const Lap_X_sign = Lap_X_signify[1];
 
     //
-    // write to file
+    // LinRegParams proof: write to file
     //
 
-    var file = fs.createWriteStream('auto_input_private.json');
-    file.on('error', function (err) { /* error handling */});
-    file.write("{\n");
+    let file_params = fs.createWriteStream('LinRegParams_input_private.json');
+    file_params.on('error', function (err) { /* error handling */});
+    file_params.write("{\n");
 
-    //
     //private inputs
-    //
 
     //write X_ROUND_POS
-    file.write("  \"in_x_pos\":\n    [\n");
+    file_params.write("  \"in_x_pos\":\n    [\n");
     for (var j = 0; j < x_round_pos.length; j++) {
         if (j != k - 1) {
-            file.write("      [" + x_round_pos[j] + "],\n");
+            file_params.write("      [" + x_round_pos[j] + "],\n");
         } else {
-            file.write("      [" + x_round_pos[j] + "]\n");
+            file_params.write("      [" + x_round_pos[j] + "]\n");
         }
     }
-    file.write("    ],\n");
+    file_params.write("    ],\n");
     //write X_ROUND_SIGN
-    file.write("  \"in_x_sign\":\n    [\n");
+    file_params.write("  \"in_x_sign\":\n    [\n");
     for (var j = 0; j < x_round_sign.length; j++) {
         if (j != k - 1) {
-            file.write("      [" + x_round_sign[j] + "],\n");
+            file_params.write("      [" + x_round_sign[j] + "],\n");
         } else {
-            file.write("      [" + x_round_sign[j] + "]\n");
+            file_params.write("      [" + x_round_sign[j] + "]\n");
         }
     }
-    file.write("    ],\n");
+    file_params.write("    ],\n");
 
     //write y_ROUND_POS
-    file.write("  \"in_y_pos\": [ ");
+    file_params.write("  \"in_y_pos\": [ ");
     for (var j = 0; j < y_round_pos.length; j++) {
         if (j != y_round_pos.length - 1) {
-            file.write("[" + y_round_pos[j] + "],");
+            file_params.write("[" + y_round_pos[j] + "],");
         } else {
-            file.write("[" + y_round_pos[j] + "]");
+            file_params.write("[" + y_round_pos[j] + "]");
         }
     }
-    file.write("  ],\n");
+    file_params.write("  ],\n");
     //write y_ROUND_SIGN
-    file.write("  \"in_y_sign\": [ ");
+    file_params.write("  \"in_y_sign\": [ ");
     for (var j = 0; j < y_round_sign.length; j++) {
         if (j != y_round_sign.length - 1) {
-            file.write("[" + y_round_sign[j] + "],");
+            file_params.write("[" + y_round_sign[j] + "],");
         } else {
-            file.write("[" + y_round_sign[j] + "]");
+            file_params.write("[" + y_round_sign[j] + "]");
         }
     }
-    file.write(" ],\n");
+    file_params.write(" ],\n");
 
     //write XX_INV_ROUND_POS
-    file.write("  \"in_xx_inv_pos\":\n    [\n");
+    file_params.write("  \"in_xx_inv_pos\":\n    [\n");
     for (var j = 0; j < xx_inv_round_pos.length; j++) {
         if (j != k - 1) {
-            file.write("      [" + xx_inv_round_pos[j] + "],\n");
+            file_params.write("      [" + xx_inv_round_pos[j] + "],\n");
         } else {
-            file.write("      [" + xx_inv_round_pos[j] + "]\n");
+            file_params.write("      [" + xx_inv_round_pos[j] + "]\n");
         }
     }
-    file.write("    ],\n");
+    file_params.write("    ],\n");
     //write XX_INV_ROUND_SIGN
-    file.write("  \"in_xx_inv_sign\":\n    [\n");
+    file_params.write("  \"in_xx_inv_sign\":\n    [\n");
     for (var j = 0; j < xx_inv_round_sign.length; j++) {
         if (j != k - 1) {
-            file.write("      [" + xx_inv_round_sign[j] + "],\n");
+            file_params.write("      [" + xx_inv_round_sign[j] + "],\n");
         } else {
-            file.write("      [" + xx_inv_round_sign[j] + "]\n");
+            file_params.write("      [" + xx_inv_round_sign[j] + "]\n");
         }
     }
-    file.write("    ],\n");
+    file_params.write("    ],\n");
 
-    //
     //public inputs
-    //
 
     //write k
-    file.write("  \"in_k\": " + k + ",\n");
+    file_params.write("  \"in_k\": " + k + ",\n");
 
     //write n
-    file.write("  \"in_n\": " + n + ",\n");
+    file_params.write("  \"in_n\": " + n + ",\n");
 
     //write dec
-    file.write("  \"in_dec\": " + dec + ",\n");
+    file_params.write("  \"in_dec\": " + dec + ",\n");
 
     //write merkle root
-    file.write("  \"in_xy_merkleroot\": \"" + tree.root + "\",\n");
+    file_params.write("  \"in_xy_merkleroot\": \"" + xy_tree.root + "\",\n");
 
     //write Lap_X_pos
-    file.write("  \"in_Lap_X_pos\": [");
+    file_params.write("  \"in_Lap_X_pos\": [");
     for (let j = 0; j < Lap_X_pos.length; j++) {
         if (j != Lap_X_pos.length - 1) {
-            file.write(Lap_X_pos[j] + ",");
+            file_params.write(Lap_X_pos[j] + ",");
         } else {
-            file.write(Lap_X_pos[j] + "],\n");
+            file_params.write(Lap_X_pos[j] + "],\n");
         }
     }
 
     //write in_DP_sig_acc
-    file.write("  \"in_DP_acc\": " + DP_acc + ",\n");
+    file_params.write("  \"in_DP_acc\": " + DP_acc + ",\n");
 
     //write in_hash_BC
-    file.write("  \"in_hash_BC\": \"" + DP_hash_BC + "\",\n");
+    file_params.write("  \"in_hash_BC\": \"" + DP_hash_BC + "\",\n");
 
     //write b_NOISY_POS
-    file.write("  \"in_b_noisy_true_pos\": [ ");
+    file_params.write("  \"in_b_noisy_true_pos\": [ ");
     for (var j = 0; j < b_noisy_pos.length; j++) {
         if (j != b_noisy_pos.length - 1) {
-            file.write("[" + b_noisy_pos[j] + "],");
+            file_params.write("[" + BigInt(b_noisy_pos[j]) + "],");
         } else {
-            file.write("[" + b_noisy_pos[j] + "]");
+            file_params.write("[" + BigInt(b_noisy_pos[j]) + "]");
         }
     }
-    file.write(" ],\n");
+    file_params.write(" ],\n");
     //write b_NOISY_SIGN
-    file.write("  \"in_b_noisy_true_sign\": [ ");
+    file_params.write("  \"in_b_noisy_true_sign\": [ ");
     for (var j = 0; j < b_noisy_sign.length; j++) {
         if (j != b_noisy_sign.length - 1) {
-            file.write("[" + b_noisy_sign[j] + "],");
+            file_params.write("[" + b_noisy_sign[j] + "],");
         } else {
-            file.write("[" + b_noisy_sign[j] + "]");
+            file_params.write("[" + b_noisy_sign[j] + "]");
         }
     }
-    file.write(" ],\n");
+    file_params.write(" ],\n");
 
     //write require_XX_acc
-    file.write("  \"in_require_XX_acc\": " + require_XX_acc + ",\n");
+    file_params.write("  \"in_require_XX_acc\": " + require_XX_acc + ",\n");
 
     //write require_XX_inv_maxnorm
-    file.write("  \"in_require_XX_inv_maxnorm\": " + require_XX_inv_maxnorm + ",\n");
+    file_params.write("  \"in_require_XX_inv_maxnorm\": " + require_XX_inv_maxnorm + ",\n");
 
     //write require_b_noisy_acc
-    file.write("  \"in_require_b_noisy_acc\": " + require_b_noisy_acc + "\n");
+    file_params.write("  \"in_require_b_noisy_acc\": " + require_b_noisy_acc + "\n");
 
-    file.write("}");
-    file.end();
-}
+    file_params.write("}");
+    file_params.end();
 
-function writetofile() {
-    var file = fs.createWriteStream('auto_input_private.json');
-    file.on('error', function (err) { /* error handling */});
-    file.write("{\n");
 
     //
+    // LinRegCost proof: write to file
+    //
+
+    let file_cost = fs.createWriteStream('LinRegCost_input_private.json');
+    file_cost.on('error', function (err) { /* error handling */});
+    file_cost.write("{\n");
+
     //private inputs
-    //
 
     //write X_ROUND_POS
-    file.write("  \"in_x_pos\":\n    [\n");
+    file_cost.write("  \"in_x_pos\":\n    [\n");
     for (var j = 0; j < x_round_pos.length; j++) {
         if (j != k - 1) {
-            file.write("      [" + x_round_pos[j] + "],\n");
+            file_cost.write("      [" + x_round_pos[j] + "],\n");
         } else {
-            file.write("      [" + x_round_pos[j] + "]\n");
+            file_cost.write("      [" + x_round_pos[j] + "]\n");
         }
     }
-    file.write("    ],\n");
+    file_cost.write("    ],\n");
     //write X_ROUND_SIGN
-    file.write("  \"in_x_sign\":\n    [\n");
+    file_cost.write("  \"in_x_sign\":\n    [\n");
     for (var j = 0; j < x_round_sign.length; j++) {
         if (j != k - 1) {
-            file.write("      [" + x_round_sign[j] + "],\n");
+            file_cost.write("      [" + x_round_sign[j] + "],\n");
         } else {
-            file.write("      [" + x_round_sign[j] + "]\n");
+            file_cost.write("      [" + x_round_sign[j] + "]\n");
         }
     }
-    file.write("    ],\n");
+    file_cost.write("    ],\n");
 
     //write y_ROUND_POS
-    file.write("  \"in_y_pos\": [ ");
+    file_cost.write("  \"in_y_pos\": [ ");
     for (var j = 0; j < y_round_pos.length; j++) {
         if (j != y_round_pos.length - 1) {
-            file.write("[" + y_round_pos[j] + "],");
+            file_cost.write("[" + y_round_pos[j] + "],");
         } else {
-            file.write("[" + y_round_pos[j] + "]");
+            file_cost.write("[" + y_round_pos[j] + "]");
         }
     }
-    file.write("  ],\n");
+    file_cost.write("  ],\n");
     //write y_ROUND_SIGN
-    file.write("  \"in_y_sign\": [ ");
+    file_cost.write("  \"in_y_sign\": [ ");
     for (var j = 0; j < y_round_sign.length; j++) {
         if (j != y_round_sign.length - 1) {
-            file.write("[" + y_round_sign[j] + "],");
+            file_cost.write("[" + y_round_sign[j] + "],");
         } else {
-            file.write("[" + y_round_sign[j] + "]");
+            file_cost.write("[" + y_round_sign[j] + "]");
         }
     }
-    file.write(" ],\n");
+    file_cost.write(" ],\n");
+
+    //write b_ROUND_POS
+    file_cost.write("  \"in_b_true_pos\": [ ");
+    for (var j = 0; j < b_round_pos.length; j++) {
+        if (j != b_round_pos.length - 1) {
+            file_cost.write("[" + Math.round(b_round_pos[j] / 10**(2*dec)) + "],");
+        } else {
+            file_cost.write("[" + Math.round(b_round_pos[j] / 10**(2*dec))+ "]");
+        }
+    }
+    file_cost.write(" ],\n");
+    //write b_ROUND_SIGN
+    file_cost.write("  \"in_b_true_sign\": [ ");
+    for (var j = 0; j < b_round_sign.length; j++) {
+        if (j != b_round_sign.length - 1) {
+            file_cost.write("[" + b_round_sign[j] + "],");
+        } else {
+            file_cost.write("[" + b_round_sign[j] + "]");
+        }
+    }
+    file_cost.write(" ],\n");
 
     //write XX_INV_ROUND_POS
-    file.write("  \"in_xx_inv_pos\":\n    [\n");
+    file_cost.write("  \"in_xx_inv_pos\":\n    [\n");
     for (var j = 0; j < xx_inv_round_pos.length; j++) {
         if (j != k - 1) {
-            file.write("      [" + xx_inv_round_pos[j] + "],\n");
+            file_cost.write("      [" + xx_inv_round_pos[j] + "],\n");
         } else {
-            file.write("      [" + xx_inv_round_pos[j] + "]\n");
+            file_cost.write("      [" + xx_inv_round_pos[j] + "]\n");
         }
     }
-    file.write("    ],\n");
+    file_cost.write("    ],\n");
     //write XX_INV_ROUND_SIGN
-    file.write("  \"in_xx_inv_sign\":\n    [\n");
+    file_cost.write("  \"in_xx_inv_sign\":\n    [\n");
     for (var j = 0; j < xx_inv_round_sign.length; j++) {
         if (j != k - 1) {
-            file.write("      [" + xx_inv_round_sign[j] + "],\n");
+            file_cost.write("      [" + xx_inv_round_sign[j] + "],\n");
         } else {
-            file.write("      [" + xx_inv_round_sign[j] + "]\n");
+            file_cost.write("      [" + xx_inv_round_sign[j] + "]\n");
         }
     }
-    file.write("    ],\n");
+    file_cost.write("    ],\n");
 
-    //
     //public inputs
-    //
+
+    //write X_TEST_ROUND_POS
+    file_cost.write("  \"in_x_test_pos\":\n    [\n");
+    for (var j = 0; j < x_test_round_pos.length; j++) {
+        if (j != k - 1) {
+            file_cost.write("      [" + x_test_round_pos[j] + "],\n");
+        } else {
+            file_cost.write("      [" + x_test_round_pos[j] + "]\n");
+        }
+    }
+    file_cost.write("    ],\n");
+    //write X_TEST_ROUND_SIGN
+    file_cost.write("  \"in_x_test_sign\":\n    [\n");
+    for (var j = 0; j < x_test_round_sign.length; j++) {
+        if (j != k - 1) {
+            file_cost.write("      [" + x_test_round_sign[j] + "],\n");
+        } else {
+            file_cost.write("      [" + x_test_round_sign[j] + "]\n");
+        }
+    }
+    file_cost.write("    ],\n");
+
+    //write y_TEST_ROUND_POS
+    file_cost.write("  \"in_y_test_pos\": [ ");
+    for (var j = 0; j < y_test_round_pos.length; j++) {
+        if (j != y_test_round_pos.length - 1) {
+            file_cost.write("[" + y_test_round_pos[j] + "],");
+        } else {
+            file_cost.write("[" + y_test_round_pos[j] + "]");
+        }
+    }
+    file_cost.write("  ],\n");
+    //write y_TEST_ROUND_SIGN
+    file_cost.write("  \"in_y_test_sign\": [ ");
+    for (var j = 0; j < y_test_round_sign.length; j++) {
+        if (j != y_test_round_sign.length - 1) {
+            file_cost.write("[" + y_test_round_sign[j] + "],");
+        } else {
+            file_cost.write("[" + y_test_round_sign[j] + "]");
+        }
+    }
+    file_cost.write(" ],\n");
 
     //write k
-    file.write("  \"in_k\": " + k + ",\n");
+    file_cost.write("  \"in_k\": " + k + ",\n");
 
     //write n
-    file.write("  \"in_n\": " + n + ",\n");
+    file_cost.write("  \"in_n\": " + n + ",\n");
+
+    //write n_test
+    file_cost.write("  \"in_n_test\": " + n_test + ",\n");
 
     //write dec
-    file.write("  \"in_dec\": " + dec + ",\n");
+    file_cost.write("  \"in_dec\": " + dec + ",\n");
 
-    //write merkle root
-    file.write("  \"in_xy_merkleroot\": \"" + tree.root + "\",\n");
+    //write xy_merkleroot
+    file_cost.write("  \"in_xy_merkleroot\": \"" + xy_tree.root + "\",\n");
 
-    //write Lap_X_pos
-    file.write("  \"in_Lap_X_pos\": [");
-    for (let j = 0; j < Lap_X_pos.length; j++) {
-        if (j != Lap_X_pos.length - 1) {
-            file.write(Lap_X_pos[j] + ",");
-        } else {
-            file.write(Lap_X_pos[j] + "],\n");
-        }
-    }
+    //write test_merkleroot
+    file_cost.write("  \"in_test_merkleroot\": \"" + test_tree.root + "\",\n");
 
-    //write in_DP_sig_acc
-    file.write("  \"in_DP_acc\": " + DP_acc + ",\n");
+    //write require_b_acc
+    file_cost.write("  \"in_require_b_acc\": " + require_b_noisy_acc + "\n");
 
-    //write in_hash_BC
-    file.write("  \"in_hash_BC\": \"" + DP_hash_BC + "\",\n");
-
-    //write b_NOISY_POS
-    file.write("  \"in_b_noisy_true_pos\": [ ");
-    for (var j = 0; j < b_noisy_pos.length; j++) {
-        if (j != b_noisy_pos.length - 1) {
-            file.write("[" + b_noisy_pos[j] + "],");
-        } else {
-            file.write("[" + b_noisy_pos[j] + "]");
-        }
-    }
-    file.write(" ],\n");
-    //write b_NOISY_SIGN
-    file.write("  \"in_b_noisy_true_sign\": [ ");
-    for (var j = 0; j < b_noisy_sign.length; j++) {
-        if (j != b_noisy_sign.length - 1) {
-            file.write("[" + b_noisy_sign[j] + "],");
-        } else {
-            file.write("[" + b_noisy_sign[j] + "]");
-        }
-    }
-    file.write(" ],\n");
-
-    //write require_XX_acc
-    file.write("  \"in_require_XX_acc\": " + require_XX_acc + ",\n");
-
-    //write require_XX_inv_maxnorm
-    file.write("  \"in_require_XX_inv_maxnorm\": " + require_XX_inv_maxnorm + ",\n");
-
-    //write require_b_noisy_acc
-    file.write("  \"in_require_b_noisy_acc\": " + require_b_noisy_acc + "\n");
-
-    file.write("}");
-    file.end();
+    file_cost.write("}");
+    file_cost.end();
 }
 
 function signify(x) {
