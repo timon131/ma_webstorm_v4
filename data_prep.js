@@ -1,17 +1,23 @@
 const csv = require('csvtojson');
-const matrixmath = require ("mathjs");
 
 ////////////////////////////////////
 
-const csvFilePath = '/media/sf_97_VM-share/02_Data/housing.csv';
-async function importCsvToArray() {
+async function prepare_housing(csvFilePath, k,n) {
+    const df = await importCsvToArray(csvFilePath);
+    //console.log(csvArray);
+    const xy = await prepare_df(df, k, n);
+    //console.log(result[1]);
+    return xy;
+}
+
+async function importCsvToArray(csvFilePath) {
     return csv().fromFile(csvFilePath);
 }
 
-function prepare_df(df, k, n) {
+async function prepare_df(df, k, n) {
     let df_out = [];
 
-    // convert to array and dummify
+    // convert to array and dummify 'ocean_proximity'
     let nearbay;    // NEAR BAY
     let ocean;      // <1H OCEAN
     let inland;     // INLAND
@@ -33,7 +39,7 @@ function prepare_df(df, k, n) {
         else if (df[i].ocean_proximity == 'ISLAND') {island = 1;}
 
         df_out[i] = [
-            Number(df[i].median_house_value),
+            Number(df[i].median_house_value),   //dependent variable
             Number(df[i].longitude),
             Number(df[i].latitude),
             Number(df[i].housing_median_age),
@@ -51,7 +57,7 @@ function prepare_df(df, k, n) {
     }
 
     // get mean
-    let k_stand = k;
+    let k_stand = k+1;
     if (k_stand > 9) {k_stand = 9;} //dummies don't need to be standardized
 
     let mean = [];
@@ -108,22 +114,39 @@ function prepare_df(df, k, n) {
         x[i][0] = 1;
     }
     x = MatrixTranspose(x);
+    x.pop();
 
 
-    return x;
+    return [x, y];
+    //return x;
 }
-
-async function getArray(k, n) {
+/*
+function prepare_housing(k, n) {
     importCsvToArray().then(
         function (df) {
-            let df_tmp = prepare_df(df, k, n);
-            console.log(df_tmp);
+            //let data = prepare_df(df, k, n);
+            //console.log(data[0])
+            //return data[0];
+
+            let result = prepare_df(df, k, n).then(
+                function ([x, y]) {
+                    //console.log('x: \n', x);
+                    //console.log('y: \n', y);
+                    return [x, y];
+                },
+                function (error) {
+                    console.log(error);
+                }
+            )
+            return result;
         },
         function (error) {
             console.log(error);
         }
-    );
+    )
 }
+
+*/
 
 function MatrixTranspose(a) {
     var a_rows = a.length;
@@ -145,11 +168,10 @@ function MatrixTranspose(a) {
     return a_trans;
 }
 
-getArray(13, 20);
-
 
 ////////////////////////////////
 
+// todo: must be updated to k+1
 function prepare_randomdata(k, n) {
     // create values of X using random numbers
     var x_val = [];
@@ -240,5 +262,6 @@ function prepare_randomdata(k, n) {
 
 module.exports = {
     //functions:
-    prepare_randomdata
+    prepare_randomdata,
+    prepare_housing
 }

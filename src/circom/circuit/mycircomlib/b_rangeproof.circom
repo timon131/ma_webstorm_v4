@@ -9,13 +9,13 @@ include "matrixnorms.circom";
 template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
     signal input in_x_pos[k][n];
     signal input in_x_sign[k][n];
-    signal input in_xx_inv_pos[k][k];
-    signal input in_xx_inv_sign[k][k];
     signal input in_y_pos[n][1];
     signal input in_y_sign[n][1];
+    signal input in_xx_inv_pos[k][k];
+    signal input in_xx_inv_sign[k][k];
     //public inputs:
     signal input in_Lap_X_pos[DP_acc - 1];
-    signal input in_DP_sig_acc;
+    signal input in_DP_acc;
     signal input in_hash_BC;
     signal input range_acc_abs;
     signal input in_b_noisy_true_pos[k][1];
@@ -60,6 +60,7 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
         y_mult.in_b_sign[i][0] <== in_y_sign[i][0];
     }
 
+
     //
     // 3. step | calculate b_NOISY
     //
@@ -75,10 +76,11 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
         DP_noise.in_b_sign[j][0] <== y_mult.out_sign[j][0];
     }
     DP_noise.in_hash_BC <== in_hash_BC;
-    DP_noise.in_DP_sig_acc <== in_DP_sig_acc;
+    DP_noise.in_DP_sig_acc <== in_DP_acc;
     for (var i = 0; i < (DP_acc - 1); i++) {
         DP_noise.in_Lap_X_pos[i] <== in_Lap_X_pos[i];
     }
+
 
     //
     // 4. step | range proof b
@@ -94,7 +96,7 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
     component b_diff[k] = AbsDiff(bits);
     component b_range[k] = Range(range_acc_step, bits);
     for (var j = 0; j < k; j++) {
-        assert (DP_noise.out_b_sign[j][0] == in_b_noisy_true_sign[j][0]);
+        DP_noise.out_b_sign[j][0] === in_b_noisy_true_sign[j][0];
 
         //calculate difference
         b_diff[j].in_a <== DP_noise.out_b_pos[j][0];
@@ -121,5 +123,5 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
 
 }
 
-//component main = b_RangeProof(4, 20, 10, 1, 5, 100);
+//component main = b_RangeProof(5, 20, 3, 1, 5, 100);
 //cf. b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc)

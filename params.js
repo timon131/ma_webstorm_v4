@@ -6,19 +6,22 @@ const matrixmath = require ("mathjs");
 
 function calculate_params (x, y, k, n, dec) {
 
+    //console.log(x);
+    //console.log(y);
+
     //
     // 1. step | compute LinReg
     //
 
-    // multiply: XX (k x k) = X (k x n) * X_TRANS (n x k)
+    // multiply: XX (k+1 x k+1) = X (k+1 x n) * X_TRANS (n x k+1)
     var x_trans = MatrixTranspose(x);
     var xx = matrixmath.multiply(x, x_trans);
 
-    // compute: INV_XX (k x k)
+    // compute: INV_XX (k+1 x k+1)
     var xx_inv;
     xx_inv = matrixmath.inv(xx);
 
-    // compute: b (k x 1) = INV_XX (k x k) * X (k x n) * y (n x 1)
+    // compute: b (k+1 x 1) = INV_XX (k+1 x k+1) * X (k+1 x n) * y (n x 1)
     var b = matrixmath.multiply(matrixmath.multiply(xx_inv, x), y);
 
 

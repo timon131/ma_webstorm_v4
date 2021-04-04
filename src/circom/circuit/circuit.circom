@@ -1,3 +1,11 @@
+include "../../../circomlib/circuits/gates.circom";
+include "./mycircomlib/matrixmult.circom";
+include "./mycircomlib/range.circom";
+include "./mycircomlib/abs_diff.circom";
+include "./mycircomlib/DP_noise.circom";
+include "./mycircomlib/matrixnorms.circom";
+
+
 include "./mycircomlib/merkleproof.circom";
 include "./mycircomlib/xx_rangeproof.circom";
 include "./mycircomlib/b_rangeproof.circom";
@@ -164,7 +172,7 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_b_noisy_ac
         b_rangeproof.in_Lap_X_pos[i] <== in_Lap_X_pos[i];
     }
     b_rangeproof.in_hash_BC <== in_hash_BC;
-    b_rangeproof.in_DP_sig_acc <== in_DP_acc;
+    b_rangeproof.in_DP_acc <== in_DP_acc;
     for (var j = 0; j < k; j++) {
         b_rangeproof.in_b_noisy_true_pos[j][0] <== in_b_noisy_true_pos[j][0];
         b_rangeproof.in_b_noisy_true_sign[j][0] <== in_b_noisy_true_sign[j][0];
@@ -181,5 +189,5 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_b_noisy_ac
     1 === range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(4, 50, 5, 8, 3, 3, 1, 100);
+component main = LinRegProof(5, 20, 5, 7, 3, 3, 1, 100);
 //cf. LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_b_noisy_acc, hash_alg, DP_acc)

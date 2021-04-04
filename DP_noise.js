@@ -28,6 +28,8 @@ function get_RandVar(b_round_pos, b_round_sign, y_round_pos, y_round_sign, DP_ha
     // 2. step | hash DP_hash_Y & DP_hash_BC
     //
 
+    console.assert(b_round_pos.length > y_round_pos.length, 'make sure: n >= k');
+
     let pos_tmp = [];
     let hash = [];
     for (let j = 0; j < y_round_field.length; j++) {
