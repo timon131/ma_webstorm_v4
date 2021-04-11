@@ -4,6 +4,7 @@ include "./mycircomlib/matrixmult.circom";
 include "./mycircomlib/range.circom";
 include "./mycircomlib/abs_diff.circom";
 include "./mycircomlib/DP_noise.circom";
+include "./mycircomlib/matrixmult.circom";
 include "./mycircomlib/matrixnorms.circom";
 include "./mycircomlib/merkleproof.circom";
 include "./mycircomlib/xx_rangeproof.circom";
@@ -41,6 +42,7 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_b_noisy_ac
     signal input in_b_noisy_true_sign[k][1];
     signal input in_require_XX_acc;
     signal input in_require_XX_inv_maxnorm;
+    signal input in_require_X_trans_Y_maxnorm;
     signal input in_require_b_noisy_acc;
 
     //
@@ -143,7 +145,43 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_b_noisy_ac
 
 
     //
-    // 4. step | b range proof
+    // 4. step | range proof max element matrix norm for X_trans_Y
+    //
+
+    // compute X_trans_Y (k x 1) = X (k x n) * Y (n x 1)
+    var bits_range_X_trans_Y_norm = 0;
+    while (2**bits_range_X_trans_Y_norm < (k * 10**(3*dec))) {
+        bits_range_X_trans_Y_norm++;
+    }
+    component X_trans_Y_mult = MatrixMult(n, k, 1);
+    for (var j = 0; j < k; j++) {
+        for (var i = 0; i < n; i++) {
+            X_trans_Y_mult.in_a[j][i] <== in_x_pos[j][i];
+            X_trans_Y_mult.in_a_sign[j][i] <== in_x_sign[j][i];
+        }
+    }
+    for (var i = 0; i < n; i++) {
+        X_trans_Y_mult.in_b[i][0] <== in_y_pos[i][0];
+        X_trans_Y_mult.in_b_sign[i][0] <== in_y_sign[i][0];
+    }
+
+    //get max element
+    component maxelement_X_trans_Y_pos = VectorNormMaxElement(k, bits_range_X_trans_Y_norm);
+    for (var j = 0; j < k; j++) {
+        maxelement_X_trans_Y_pos.in[j] <== X_trans_Y_mult.out[j][0];
+    }
+
+    //check range
+    component range_X_trans_Y_norm = LessEqThan(bits_range_X_trans_Y_norm);
+    range_X_trans_Y_norm.in[0] <== in_k * maxelement_X_trans_Y_pos.out;
+    range_X_trans_Y_norm.in[1] <== in_require_X_trans_Y_maxnorm;
+
+    //make sure that in_k * maxelement_XX_inv_pos.out <= in_require_XX_inv_maxnorm;
+    1 === range_X_trans_Y_norm.out;
+
+
+    //
+    // 5. step | b range proof
     //
 
     component b_rangeproof = b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc);

@@ -2,11 +2,13 @@ const build_merkle = require ("./build_merkle.js");
 const params = require ("./params.js");
 const data_prep = require ("./data_prep.js");
 const DP_noise = require ("./DP_noise.js");
+const cost = require ("./cost.js");
 const fs = require ("fs");
 
 ////////////////////////////////
 generate_ZKPinputs(1);
 async function generate_ZKPinputs(l) {
+    // l: clientID
 
     //
     // set parameters
@@ -175,7 +177,7 @@ async function generate_ZKPinputs(l) {
     const b_noisy_pos = b_noisy[0];
     const b_noisy_sign = b_noisy[1];
 
-    //get random variables
+    //get Lap_X
     const P_tmp = [];
     for (let i = 1; i < DP_acc; i++) {
         P_tmp[i - 1] = i;
@@ -185,6 +187,9 @@ async function generate_ZKPinputs(l) {
     let Lap_X_signify = signify(Lap_X);
     const Lap_X_pos = Lap_X_signify[0];
     //const Lap_X_sign = Lap_X_signify[1];
+
+    //get cost
+    const _cost = cost.calcCost(b_round_pos, b_round_sign, x_test_round_pos, x_test_round_sign, y_test_round_pos, y_test_round_sign, dec);
 
     //
     // LinRegParams proof: write to file
@@ -293,9 +298,9 @@ async function generate_ZKPinputs(l) {
     file_params.write("  \"in_b_noisy_true_pos\": [ ");
     for (var j = 0; j < b_noisy_pos.length; j++) {
         if (j != b_noisy_pos.length - 1) {
-            file_params.write("[" + BigInt(b_noisy_pos[j]) + "],");
+            file_params.write("[\"" + BigInt(b_noisy_pos[j]) + "\"],");
         } else {
-            file_params.write("[" + BigInt(b_noisy_pos[j]) + "]");
+            file_params.write("[\"" + BigInt(b_noisy_pos[j]) + "\"]");
         }
     }
     file_params.write(" ],\n");
@@ -314,10 +319,10 @@ async function generate_ZKPinputs(l) {
     file_params.write("  \"in_require_XX_acc\": " + require_XX_acc + ",\n");
 
     //write require_XX_inv_maxnorm
-    file_params.write("  \"in_require_XX_inv_maxnorm\": " + require_XX_inv_maxnorm + ",\n");
+    file_params.write("  \"in_require_XX_inv_maxnorm\": \"" + require_XX_inv_maxnorm + "\",\n");
 
     //write require_X_trans_Y_maxnorm
-    file_params.write("  \"in_require_X_trans_Y_maxnorm\": " + require_X_trans_Y_maxnorm + ",\n");
+    file_params.write("  \"in_require_X_trans_Y_maxnorm\": \"" + require_X_trans_Y_maxnorm + "\",\n");
 
     //write require_b_noisy_acc
     file_params.write("  \"in_require_b_noisy_acc\": " + require_b_noisy_acc + "\n");
@@ -463,6 +468,9 @@ async function generate_ZKPinputs(l) {
         }
     }
     file_cost.write(" ],\n");
+
+    //write cost_submitted
+    file_cost.write("  \"in_cost_submitted\": \"" + BigInt(_cost) + "\",\n");
 
     //write k
     file_cost.write("  \"in_k\": " + k + ",\n");
