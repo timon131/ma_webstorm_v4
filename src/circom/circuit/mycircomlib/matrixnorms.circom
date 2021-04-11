@@ -161,4 +161,33 @@ template VectorNormMinElement(n, dec) {
     out <== check[n - 1];
 }
 
+template VectorNormMaxElement(n, bits) {
+    signal input in[n];
+    signal output out;
+
+    //make sure that matrix size is feasible
+    assert (n >= 2);
+
+
+    //
+    // 1. step | get maximum element
+    //
+
+    signal check[n];
+    check[0] <== in[0];
+    signal check_a[n - 1];
+    signal check_b[n - 1];
+    component greater[n - 1] = GreaterThan(bits);
+    for (var i = 0; i < (n - 1); i++) {
+        greater[i].in[0] <== check[i];
+        greater[i].in[1] <== in[i+1];
+
+        check_a[i] <== greater[i].out * check[i];
+        check_b[i] <== (1 - greater[i].out) * in[i+1];
+        check[i+1] <== check_a[i] + check_b[i];
+    }
+
+    out <== check[n - 1];
+}
+
 //component main = NormMinElement(4, 20, 5);

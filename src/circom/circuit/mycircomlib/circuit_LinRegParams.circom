@@ -58,7 +58,7 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_b_noisy_ac
 
 
     //
-    // 1. step | Check x_merkleroot
+    // 1. step | Check xy_merkleroot
     //
 
     component xy_merkleproof = MerkleProof(k, n, merkle_level, hash_alg);

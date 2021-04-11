@@ -30,17 +30,20 @@ async function generate_ZKPinputs(l) {
     //set DP noise parameters
     const delta = 1000000;    //define when magnitude of each b value (do not reduce bs!) is known: delta = b[i]_max - b[i]_min
     const epsilon = 1;  // delta / epsilon = lambda
-    const DP_acc = 100;  //must some power of 10
+    const DP_acc = 100;  //must be some power of 10
     const DP_hash_BC = BigInt("17758051187679994451203721828730993341951654331694709087352450464095838859238");
 
     //set accuracies for range proofs
     const require_XX_acc = 3;
     const require_XX_inv_maxnorm = 0.5 * k * 10 ** (dec);
+    const require_X_trans_Y_maxnorm = k * 10 ** (3*dec);
     const require_b_noisy_acc = 3;
 
-    //print size of input_public.json
-    console.log("size of input_public.json:");
-    console.log(1 + 1 + 1 + 1 + DP_acc - 1 + 1 + 1 + k + k + 1 + 1 + 1);
+    //print sizes of input_public.json
+    console.log("size of beta_input_public.json:");
+    console.log(1 + 1 + 1 + 1 + DP_acc - 1 + 1 + 1 + k + k + 1 + 1 + 1 + 1);
+    console.log("size of cost_input_public.json:");
+    console.log(8);
 
 
     //
@@ -312,6 +315,9 @@ async function generate_ZKPinputs(l) {
 
     //write require_XX_inv_maxnorm
     file_params.write("  \"in_require_XX_inv_maxnorm\": " + require_XX_inv_maxnorm + ",\n");
+
+    //write require_X_trans_Y_maxnorm
+    file_params.write("  \"in_require_X_trans_Y_maxnorm\": " + require_X_trans_Y_maxnorm + ",\n");
 
     //write require_b_noisy_acc
     file_params.write("  \"in_require_b_noisy_acc\": " + require_b_noisy_acc + "\n");
