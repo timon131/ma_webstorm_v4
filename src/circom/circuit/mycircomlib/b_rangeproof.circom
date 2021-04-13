@@ -89,20 +89,26 @@ template b_noisy_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
 
     //calculate bits
     var bits = 0;
-    while (2**bits < 10**(dec * 3)) {
+    while (2**bits < 10**((dec * 3) + 1)) {
         bits++;
     }
 
     // calculate range per element
     component b_diff[k] = AbsDiff(bits);
     component b_range[k] = Range(range_acc_step, bits);
+    signal tmp_DP_noise_out_b[k];
+    signal tmp_in_b_noisy_true[k];
     for (var j = 0; j < k; j++) {
-        //check sign
-        DP_noise.out_b_sign[j][0] === in_b_noisy_true_sign[j][0];
+        //check sign --> changed to signify and then check as for small betas, sign might be different even though computation is correct!
+        //DP_noise.out_b_sign[j][0] === in_b_noisy_true_sign[j][0];
+
+        //signify
+        tmp_DP_noise_out_b[j] <== 2 * DP_noise.out_b_sign[j][0] * DP_noise.out_b_pos[j][0];
+        tmp_in_b_noisy_true[j] <== 2 * in_b_noisy_true_sign[j][0] * in_b_noisy_true_pos[j][0];
 
         //calculate difference
-        b_diff[j].in_a <== DP_noise.out_b_pos[j][0];
-        b_diff[j].in_b <== in_b_noisy_true_pos[j][0];
+        b_diff[j].in_a <== DP_noise.out_b_pos[j][0] - tmp_DP_noise_out_b[j];
+        b_diff[j].in_b <== in_b_noisy_true_pos[j][0] - tmp_in_b_noisy_true[j];
 
         //calculate range
         b_range[j].truth <== b_diff[j].out;

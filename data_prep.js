@@ -33,6 +33,7 @@ async function prepare_df(df, k, n, l) {
     let nearocean;  // NEAR OCEAN
     let island;     // ISLAND
 
+    let df_i = 0;
     for (let i = (l-1)*n; i < l*n; i++) {
 
         nearbay = 0;    // NEAR BAY
@@ -47,7 +48,7 @@ async function prepare_df(df, k, n, l) {
         else if (df[i].ocean_proximity == 'NEAR OCEAN') {nearocean = 1;}
         else if (df[i].ocean_proximity == 'ISLAND') {island = 1;}
 
-        df_out[i] = [
+        df_out[df_i] = [
             Number(df[i].median_house_value),   //dependent variable
             Number(df[i].longitude),
             Number(df[i].latitude),
@@ -62,7 +63,9 @@ async function prepare_df(df, k, n, l) {
             inland,
             nearocean,
             island
-        ]
+        ];
+
+        df_i++;
     }
 
     // get mean

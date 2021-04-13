@@ -44,6 +44,8 @@ function get_RandVar(b_round_pos, b_round_sign, y_round_pos, y_round_sign, DP_ha
         }
     }
 
+    //console.log(hash);
+
     //
     // 3. step | get P
     //

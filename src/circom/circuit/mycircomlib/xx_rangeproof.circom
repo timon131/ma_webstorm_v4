@@ -76,7 +76,7 @@ template XX_RangeProof(k, n, range_acc_step, dec) {
     // 2. step | check ranges
     //
 
-    //calculate bits
+    //calculate bits | 3*dec since: X * X_trans * XX_INV
     var bits = 0;
     while (2**bits < 10**(dec * 3)) {
         bits++;

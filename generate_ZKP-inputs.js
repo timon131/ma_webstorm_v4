@@ -6,7 +6,7 @@ const cost = require ("./cost.js");
 const fs = require ("fs");
 
 ////////////////////////////////
-generate_ZKPinputs(1);
+generate_ZKPinputs(2);
 async function generate_ZKPinputs(l) {
     // l: clientID
 
@@ -18,10 +18,11 @@ async function generate_ZKPinputs(l) {
     const csvFilePath = '/media/sf_97_VM-share/02_Data/housing.csv';
 
     // define number of features k and sample size n
-    let k = 4;
+    let k = 3;
     k++;    //account for X: k+1 x n
-    const n = 20;
-    const n_test = Math.round(n / 2);
+    const n = 30;
+    //const n_test = Math.round(n / 2);
+    const n_test = 10;
 
     // define accuracy dec (10**dec)
     const dec = 5;
@@ -37,8 +38,8 @@ async function generate_ZKPinputs(l) {
 
     //set accuracies for range proofs
     const require_XX_acc = 3;
-    const require_XX_inv_maxnorm = 0.5 * k * 10 ** (dec);
-    const require_X_trans_Y_maxnorm = k * 10 ** (3*dec);
+    const require_XX_inv_maxnorm = 10 ** (dec);
+    const require_X_trans_Y_maxnorm = k * 10 ** ((2*dec) + 2);
     const require_b_noisy_acc = 3;
 
     //print sizes of input_public.json

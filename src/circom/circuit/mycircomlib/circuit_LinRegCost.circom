@@ -21,6 +21,7 @@ template LinRegCost(k, n, n_test, dec, merkle_level_xy, merkle_level_test, hash_
     signal private input in_x_test_sign[k][n_test];
     signal private input in_y_test_pos[n_test][1];
     signal private input in_y_test_sign[n_test][1];
+    signal input in_cost_submitted;
     signal input in_k;
     signal input in_n;
     signal input in_n_test;
@@ -28,8 +29,6 @@ template LinRegCost(k, n, n_test, dec, merkle_level_xy, merkle_level_test, hash_
     signal input in_xy_merkleroot;
     signal input in_test_merkleroot;
     signal input in_require_b_acc;
-    //output:
-    signal output out;
 
 
     //
@@ -182,14 +181,7 @@ template LinRegCost(k, n, n_test, dec, merkle_level_xy, merkle_level_test, hash_
         cost_sum.in[i] <== (y_est[i] - y_test[i]) * (y_est[i] - y_test[i]);
     }
 
-
-    out <== cost_sum.out;
-
-/*
-    for (var i = 0; i < n_test; i++) {
-        out[i] <== y_est_mult.out[i][0];
-    }
-*/
+    in_cost_submitted === cost_sum.out;
 }
 
 component main = LinRegCost(5, 20, 10, 5, 7, 6, 1, 3);
