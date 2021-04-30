@@ -66,19 +66,31 @@ template MerkleProof_six(k, n, level, hash_alg) {
         data_leaf[i] <== 0;
     }
 
+    /*
+    1   0
+    2   0
+    3   1
+    5   3
+    9   6
+    17  15
+    */
+
     //make sure that "empty leafs" are not being hashed
     var used_leafs = 2**(level - 1) - ((leafs - ((k-1)*n + n)) \ 6);
     component hash_tree[level][2**(level - 1)];
-    for (var i = used_leafs; i < 2**(level - 1); i++) {
-        // MiMC merkle tree
-        if (hash_alg == 0) {
-            hash_tree[0][i] = MiMCDummy_six();
-            hash_tree[0][i].in <== 1;
-        // Poseidon merkle tree
-        } else if (hash_alg == 1) {
-            hash_tree[0][i] = PoseidonDummy_six();
-            hash_tree[0][i].in <== 1;
+    for (var l = 0; l < level; l++) {
+        for (var i = used_leafs; i < 2**(level - 1 - l); i++) {
+            // MiMC merkle tree
+            if (hash_alg == 0) {
+                hash_tree[l][i] = MiMCDummy_six();
+                hash_tree[l][i].in <== 1;
+            // Poseidon merkle tree
+            } else if (hash_alg == 1) {
+                hash_tree[l][i] = PoseidonDummy_six();
+                hash_tree[l][i].in <== 1;
+            }
         }
+        used_leafs = (used_leafs + 1) \ 2;
     }
 
 
@@ -110,10 +122,12 @@ template MerkleProof_six(k, n, level, hash_alg) {
 
     var delta;
     var end;
+    used_leafs = ((2**(level - 1) - ((leafs - ((k-1)*n + n)) \ 6)) + 1) \ 2;
     for (var l = 1; l < level; l++) {
         end = 2**(level - 1 - l);
+        assert (used_leafs <= end);
         delta = 0;
-        for (var i = 0; i < end; i++) {
+        for (var i = 0; i < used_leafs; i++) {
             // MiMC merkle tree
             if (hash_alg == 0) {
                 hash_tree[l][i] = MiMCSponge(2, 220, 1);
@@ -131,6 +145,7 @@ template MerkleProof_six(k, n, level, hash_alg) {
                 delta++;
             }
         }
+        used_leafs = (used_leafs + 1) \ 2;
     }
     // assign yet unassigned elements of hash_tree (throws error if not done)
     for (var l = 0; l < level; l++) {

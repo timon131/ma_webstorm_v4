@@ -22,10 +22,10 @@
 */
 
 
-include "../../../circomlib/circuits/mimcsponge.circom";
-include "../../../circomlib/circuits/poseidon.circom";
-include "./mycircomlib/hash_dummy.circom";
-include "./mycircomlib/zero.circom";
+include "../../../../circomlib/circuits/mimcsponge.circom";
+include "../../../../circomlib/circuits/poseidon.circom";
+include "hash_dummy.circom";
+include "zero.circom";
 
 
 // hash_alg | choose hash-algorithm: 0 for MiMC or 1 for Poseidon
@@ -72,11 +72,11 @@ template MerkleProof_six(k, n, level, hash_alg) {
     for (var i = used_leafs; i < 2**(level - 1); i++) {
         // MiMC merkle tree
         if (hash_alg == 0) {
-            hash_tree[0][i] = MiMCDummy();
+            hash_tree[0][i] = MiMCDummy_six();
             hash_tree[0][i].in <== 1;
         // Poseidon merkle tree
         } else if (hash_alg == 1) {
-            hash_tree[0][i] = PoseidonDummy();
+            hash_tree[0][i] = PoseidonDummy_six();
             hash_tree[0][i].in <== 1;
         }
     }
@@ -152,5 +152,5 @@ template MerkleProof_six(k, n, level, hash_alg) {
     }
 }
 
-component main = MerkleProof_six(5, 20, 6, 0);
+//component main = MerkleProof_six(5, 20, 6, 0);
 //cf. MerkleProof_six(k, n, level, hash_alg)

@@ -3,7 +3,7 @@ include "./mycircomlib/matrixmult.circom";
 include "./mycircomlib/range.circom";
 include "./mycircomlib/DP_noise.circom";
 include "./mycircomlib/matrixnorms.circom";
-include "./mycircomlib/merkleproof.circom";
+include "./mycircomlib/merkleproof_six.circom";
 include "./mycircomlib/xx_rangeproof.circom";
 include "./mycircomlib/b_rangeproof.circom";
 
@@ -53,7 +53,7 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_max
     // 1. step | Check xy_merkleroot
     //
 
-    component xy_merkleproof = MerkleProof(k, n, merkle_level, hash_alg);
+    component xy_merkleproof = MerkleProof_six(k, n, merkle_level, hash_alg);
 
     //assign inputs
     for (var j = 0; j < k; j++) {
@@ -216,5 +216,5 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_max
     1 === range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(5, 30, 5, 8, 3, 100000, 5000000000000, 3, 1, 100);
+component main = LinRegProof(5, 20, 5, 6, 3, 100000, 5000000000000, 3, 1, 100);
 //cf. LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc)
