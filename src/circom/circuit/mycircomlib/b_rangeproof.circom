@@ -1,13 +1,12 @@
 include "../../../../circomlib/circuits/gates.circom";
 include "matrixmult.circom";
 include "range.circom";
-include "abs_diff.circom";
 include "DP_noise.circom";
 include "matrixnorms.circom";
 include "power.circom";
 
 
-template b_noisy_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
+template b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc) {
     signal input in_x_pos[k][n];
     signal input in_x_sign[k][n];
     signal input in_y_pos[n][1];
@@ -18,7 +17,6 @@ template b_noisy_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
     signal input in_Lap_X_pos[DP_acc - 1];
     signal input in_DP_acc;
     signal input in_hash_BC;
-    signal input range_acc_abs;
     signal input in_b_noisy_true_pos[k][1];
     signal input in_b_noisy_true_sign[k][1];
     //outputs:
@@ -88,45 +86,44 @@ template b_noisy_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc) {
     //
 
     //calculate bits
-    var bits = 0;
-    while (2**bits < 10**((dec * 3) + 1)) {
-        bits++;
+    var bits_absdiff_b_range = 0;
+    while ( (2**bits_absdiff_b_range + 3) < 10**((dec * 3) + 1)) {
+        bits_absdiff_b_range++;
     }
 
     // calculate range per element
-    component b_diff[k] = AbsDiff(bits);
-    component b_range[k] = Range(range_acc_step, bits);
+    component b_range[k] = Range(3*dec, require_b_noisy_acc, bits_absdiff_b_range);
     signal tmp_DP_noise_out_b[k];
     signal tmp_in_b_noisy_true[k];
     for (var j = 0; j < k; j++) {
-        //check sign --> changed to signify and then check as for small betas, sign might be different even though computation is correct!
+        //check sign --> changed to signify and then check, since for small betas, sign might be different even though computation is correct!
         //DP_noise.out_b_sign[j][0] === in_b_noisy_true_sign[j][0];
 
         //signify
         tmp_DP_noise_out_b[j] <== 2 * DP_noise.out_b_sign[j][0] * DP_noise.out_b_pos[j][0];
         tmp_in_b_noisy_true[j] <== 2 * in_b_noisy_true_sign[j][0] * in_b_noisy_true_pos[j][0];
 
-        //calculate difference
-        b_diff[j].in_a <== DP_noise.out_b_pos[j][0] - tmp_DP_noise_out_b[j];
-        b_diff[j].in_b <== in_b_noisy_true_pos[j][0] - tmp_in_b_noisy_true[j];
-
         //calculate range
-        b_range[j].truth <== b_diff[j].out;
-        b_range[j].test <== range_acc_abs;
+        b_range[j].actual <== DP_noise.out_b_pos[j][0] - tmp_DP_noise_out_b[j];
+        b_range[j].target <== in_b_noisy_true_pos[j][0] - tmp_in_b_noisy_true[j];
     }
 
     // get smallest element
-    component minelement = VectorNormMinElement(k, dec);
+    var bits_b_minelement = 0;
+    while ( (2**bits_b_minelement + 3) < require_b_noisy_acc ) {
+        bits_b_minelement++;
+    }
+    component b_minelement = VectorNormMinElement(k, bits_b_minelement);
     for (var j = 0; j < k; j++) {
-        minelement.in[j] <== b_range[j].out;
+        b_minelement.in[j] <== b_range[j].out;
     }
 
     //assign output
-    check_b_noisy_minacc <== minelement.out;
+    check_b_noisy_minacc <== b_minelement.out;
 }
 
 ////////////////////////////////////////////////
-
+//TBD: adapt to new range circuit!
 template b_RangeProof(k, n, range_acc_step, hash_alg, dec) {
     signal input in_x_pos[k][n];
     signal input in_x_sign[k][n];
@@ -219,6 +216,9 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec) {
     //assign output
     check_b_minacc <== minelement.out;
 }
+
+//component main = b_noisy_RangeProof(5, 20, 3, 1, 5, 100);
+//cf. b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc)
 
 //component main = b_RangeProof(5, 20, 3, 1, 5, 100);
 //cf. b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc)

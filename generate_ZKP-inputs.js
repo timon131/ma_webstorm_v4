@@ -18,9 +18,9 @@ async function generate_ZKPinputs(l) {
     const csvFilePath = '/media/sf_97_VM-share/02_Data/housing.csv';
 
     // define number of features k and sample size n
-    let k = 3;
+    let k = 4;
     k++;    //account for X: k+1 x n
-    const n = 30;
+    const n = 20;
     //const n_test = Math.round(n / 2);
     const n_test = 10;
 

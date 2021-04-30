@@ -27,8 +27,7 @@
     [1,0,1,0],
     [1,1,0,1],
     [1,0,1,0]
-  ],
-  "range_acc_abs": 1000000000000000
+  ]
 }
 */
 
@@ -36,22 +35,19 @@
 
 //k: number of features
 //n: sample size
-//range_acc_step: tests accuracy until 10**-range_acc_step
-//bits: number of bits that the largest input needs
+//require_XX_acc: tests accuracy until 10**-range_acc_step
 
 ///////////////////////////////////
 
 include "range.circom";
-include "abs_diff.circom";
 include "multiply-xx.circom";
 include "matrixnorms.circom";
 
-template XX_RangeProof(k, n, range_acc_step, dec) {
+template XX_RangeProof(k, n, require_XX_acc, dec) {
     signal input in_x_pos[k][n];
     signal input in_x_sign[k][n];
     signal input in_xx_inv_pos[k][k];
     signal input in_xx_inv_sign[k][k];
-    signal input range_acc_abs;
     signal output check_XX_minacc;
 
     //
@@ -61,13 +57,13 @@ template XX_RangeProof(k, n, range_acc_step, dec) {
     component calc_xx = Multiply_XX(k, n);
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            calc_xx.in_x[j][i] <== in_x_pos[j][i];
+            calc_xx.in_x_pos[j][i] <== in_x_pos[j][i];
             calc_xx.in_x_sign[j][i] <== in_x_sign[j][i];
         }
     }
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
-            calc_xx.in_xx_inv[j][i] <== in_xx_inv_pos[j][i];
+            calc_xx.in_xx_inv_pos[j][i] <== in_xx_inv_pos[j][i];
             calc_xx.in_xx_inv_sign[j][i] <== in_xx_inv_sign[j][i];
         }
     }
@@ -77,34 +73,37 @@ template XX_RangeProof(k, n, range_acc_step, dec) {
     //
 
     //calculate bits | 3*dec since: X * X_trans * XX_INV
-    var bits = 0;
-    while (2**bits < 10**(dec * 3)) {
-        bits++;
+    var bits_absdiff = 0;
+    assert (dec >= require_XX_acc);
+    while ( (2**bits_absdiff + 3) < (10**(dec * 3) + 10**(dec - require_XX_acc)) ) {
+        bits_absdiff++;
     }
 
     // calculate range per element
-    component diff[k] = AbsDiff(bits);
-    component range[k][k] = Range(range_acc_step, bits);
+    component pow_dec = Power(3 * dec);
+    pow_dec.base <== 10;
+    component range[k][k] = Range(3 * dec, require_XX_acc, bits_absdiff);
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
             // check diagonal elements
             if (j == i) {
-                assert (calc_xx.out_sign[j][i] == 0);
-                diff[j].in_a <== calc_xx.out[j][i];
-                diff[j].in_b <== range_acc_abs;
-
-                range[j][i].truth <== diff[j].out;
-                range[j][i].test <== range_acc_abs;
+                calc_xx.out_sign[j][i] === 0;
+                range[j][i].actual <== calc_xx.out_pos[j][i];
+                range[j][i].target <== pow_dec.out;
             } else {
             //check other elements
-                range[j][i].truth <== calc_xx.out[j][i];
-                range[j][i].test <== range_acc_abs;
+                range[j][i].actual <== calc_xx.out_pos[j][i];
+                range[j][i].target <== 0;
             }
         }
     }
 
     // get smallest element
-    component minelement = NormMinElement(k, k, dec);
+    var bits_minelement = 0;
+    while ( (2**bits_minelement + 3) < require_XX_acc ) {
+        bits_minelement++;
+    }
+    component minelement = NormMinElement(k, k, bits_minelement);
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
             minelement.in[j][i] <== range[j][i].out;
@@ -115,5 +114,5 @@ template XX_RangeProof(k, n, range_acc_step, dec) {
     check_XX_minacc <== minelement.out;
 }
 
-//component main = XX_RangeProof(4, 20, 6, 5);
-//cf: XX_RangeProof(k, n, range_acc_step, dec)
+//component main = XX_RangeProof(4, 20, 3, 5);
+//cf: XX_RangeProof(k, n, require_XX_acc, dec)

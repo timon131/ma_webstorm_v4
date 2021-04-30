@@ -1,20 +1,3 @@
-//Some specs
-
-//k = 4, n = 20
-//MiMC7: 134741 constraints
-//Poseidon: 23960 constraints
-
-//k = 4, n = 50
-//MiMC7: 331571 constraints
-//Poseidon: 58979 constraints
-
-//k = 4, n = 100 (ERROR: data segments count of 108142 exceeds internal limit of 100000)
-//MiMC7: XX constraints
-//Poseidon: 117729 constraints
-
-
-///////////////////////////////////////////////
-
 include "../../../../circomlib/circuits/mimcsponge.circom";
 include "../../../../circomlib/circuits/mimc.circom";
 include "../../../../circomlib/circuits/poseidon.circom";

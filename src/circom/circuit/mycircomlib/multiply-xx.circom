@@ -38,24 +38,24 @@ include "matrixmult.circom";
 //////////////////////////////////////////////
 
 template Multiply_XX(k, n) {
-    signal input in_x[k][n];
+    signal input in_x_pos[k][n];
     signal input in_x_sign[k][n];
-    signal input in_xx_inv[k][k];
+    signal input in_xx_inv_pos[k][k];
     signal input in_xx_inv_sign[k][k];
-    signal output out[k][k];
+    signal output out_pos[k][k];
     signal output out_sign[k][k];
 
     //
     // 1. step | compute x_trans = transpose(x)
     //
 
-    signal x_trans[n][k];
+    signal x_trans_pos[n][k];
     signal x_trans_sign[n][k];
 
     //transpose input matrix x
     for (var j = 0; j < n; j++) {
         for (var i = 0; i < k; i++) {
-            x_trans[j][i] <== in_x[i][j];
+            x_trans_pos[j][i] <== in_x_pos[i][j];
             x_trans_sign[j][i] <== in_x_sign[i][j];
         }
     }
@@ -69,23 +69,23 @@ template Multiply_XX(k, n) {
     // assign inputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            xx_mult.in_a[j][i] <== in_x[j][i];
+            xx_mult.in_a[j][i] <== in_x_pos[j][i];
             xx_mult.in_a_sign[j][i] <== in_x_sign[j][i];
         }
     }
     for (var j = 0; j < n; j++) {
         for (var i = 0; i < k; i++) {
-            xx_mult.in_b[j][i] <== x_trans[j][i];
+            xx_mult.in_b[j][i] <== x_trans_pos[j][i];
             xx_mult.in_b_sign[j][i] <== x_trans_sign[j][i];
         }
     }
 
     // get xx and assign outputs
-    signal xx[k][k];
+    signal xx_pos[k][k];
     signal xx_sign[k][k];
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
-            xx_mult.out[j][i] ==> xx[j][i];
+            xx_mult.out[j][i] ==> xx_pos[j][i];
             xx_mult.out_sign[j][i] ==> xx_sign[j][i];
         }
     }
@@ -99,9 +99,9 @@ template Multiply_XX(k, n) {
     //assign inputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
-            out_mult.in_a[j][i] <== xx[j][i];
+            out_mult.in_a[j][i] <== xx_pos[j][i];
             out_mult.in_a_sign[j][i] <== xx_sign[j][i];
-            out_mult.in_b[j][i] <== in_xx_inv[j][i];
+            out_mult.in_b[j][i] <== in_xx_inv_pos[j][i];
             out_mult.in_b_sign[j][i] <== in_xx_inv_sign[j][i];
         }
     }
@@ -109,7 +109,7 @@ template Multiply_XX(k, n) {
     //get outputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
-            out[j][i] <== out_mult.out[j][i];
+            out_pos[j][i] <== out_mult.out[j][i];
             out_sign[j][i] <== out_mult.out_sign[j][i];
         }
     }

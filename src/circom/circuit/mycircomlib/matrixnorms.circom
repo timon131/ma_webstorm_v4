@@ -14,22 +14,12 @@ include "../../../../circomlib/circuits/comparators.circom";
 
 ////////////////////////////////////////////
 
-template NormMaxElement(k, n, dec) {
+template NormMaxElement(k, n, bits) {
     signal input in[k][n];
     signal output out;
 
     //make sure that matrix size is feasible
     assert (n >= 2);
-
-    //
-    // 1. step | calculate bits
-    //
-
-    var bits = 0;
-    while (2**bits < 10**dec) {
-        bits++;
-    }
-
 
     //
     // 2. step | get biggest element
@@ -69,22 +59,12 @@ template NormMaxElement(k, n, dec) {
 }
 
 
-template NormMinElement(k, n, dec) {
+template NormMinElement(k, n, bits) {
     signal input in[k][n];
     signal output out;
 
     //make sure that matrix size is feasible
     assert (n >= 2);
-
-    //
-    // 1. step | calculate bits
-    //
-
-    var bits = 0;
-    while (2**bits < 10**dec) {
-        bits++;
-    }
-
 
     //
     // 2. step | get minimum element
@@ -123,22 +103,12 @@ template NormMinElement(k, n, dec) {
     out <== check[k*n - 1];
 }
 
-template VectorNormMinElement(n, dec) {
+template VectorNormMinElement(n, bits) {
     signal input in[n];
     signal output out;
 
     //make sure that matrix size is feasible
     assert (n >= 2);
-
-    //
-    // 1. step | calculate bits
-    //
-
-    var bits = 0;
-    while (2**bits < 10**dec) {
-        bits++;
-    }
-
 
     //
     // 2. step | get minimum element
@@ -167,7 +137,6 @@ template VectorNormMaxElement(n, bits) {
 
     //make sure that matrix size is feasible
     assert (n >= 2);
-
 
     //
     // 1. step | get maximum element
