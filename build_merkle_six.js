@@ -10,7 +10,7 @@ BigInt.prototype.toJSON = function() { return this.toString()  }
 //const a = int2hex(JSON.stringify(BigInt(hashes[0])))
 
 
-
+/*
 let t_x_round_pos =
     [
         [100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000],
@@ -32,6 +32,7 @@ let t_y_round_sign = [ [0],[0],[1],[1],[0],[1],[1],[1],[1],[0],[0],[1],[1],[1],[
 
 let test = build_merkletree(t_x_round_pos, t_x_round_sign, t_y_round_pos, t_y_round_sign, 0)
 console.log(test.tree)
+*/
 
 function build_merkletree(x_round_pos, x_round_sign, y_round_pos, y_round_sign, hash_alg) {
 

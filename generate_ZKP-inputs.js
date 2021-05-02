@@ -1,4 +1,5 @@
 const build_merkle = require ("./build_merkle.js");
+const build_merkle_six = require ("./build_merkle_six.js");
 const params = require ("./params.js");
 const data_prep = require ("./data_prep.js");
 const DP_noise = require ("./DP_noise.js");
@@ -15,7 +16,7 @@ async function generate_ZKPinputs(l) {
     //
 
     // define csv path
-    const csvFilePath = '/media/sf_97_VM-share/02_Data/housing.csv';
+    const csvFilePath = '/home/timmel/Documents/202105_MA/housing.csv';
 
     // define number of features k and sample size n
     let k = 4;
@@ -156,10 +157,10 @@ async function generate_ZKPinputs(l) {
 
 
     //build merkle trees
-    const xy_tree = build_merkle.build_merkletree(x_round_pos, x_round_sign, y_round_pos, y_round_sign, hash_alg);
+    const xy_tree = build_merkle_six.build_merkletree(x_round_pos, x_round_sign, y_round_pos, y_round_sign, hash_alg);
     console.log("level xy: ", xy_tree.level);
 
-    const test_tree = build_merkle.build_merkletree(x_test_round_pos, x_test_round_sign, y_test_round_pos, y_test_round_sign, hash_alg);
+    const test_tree = build_merkle_six.build_merkletree(x_test_round_pos, x_test_round_sign, y_test_round_pos, y_test_round_sign, hash_alg);
     console.log("level test: ", test_tree.level);
 
     //get b_noisy
