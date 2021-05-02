@@ -1,220 +1,183 @@
-include "../../../circomlib/circuits/comparators.circom";
-include "./mycircomlib/matrixmult.circom";
-include "./mycircomlib/range.circom";
-include "./mycircomlib/DP_noise.circom";
-include "./mycircomlib/matrixnorms.circom";
-include "./mycircomlib/merkleproof_six.circom";
-include "./mycircomlib/xx_rangeproof.circom";
-include "./mycircomlib/b_rangeproof.circom";
+/*
+{
+  "in_x_pos":
+  [
+    [100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000],
+    [46852,46852,46852,46852,46852,109322,109322,109322,109322,109322,109322,109322,46852,46852,46852,46852,46852,109322,203026,203026],
+    [143208,143208,13019,13019,13019,143208,143208,143208,13019,13019,13019,13019,13019,117170,117170,117170,117170,117170,117170,117170],
+    [245355,192017,74673,74673,74673,218686,5334,74673,21335,74673,5334,74673,32003,5334,48004,5334,32003,74673,74673,74673],
+    [163473,9281,129110,773,92298,200979,97663,35692,67641,167293,38817,79970,39859,6503,168873,82904,18328,31507,38626,128415]
+  ],
+  "in_x_sign":
+  [
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1],
+    [1,1,0,0,0,1,1,0,0,0,1,0,1,1,0,1,1,0,0,0],
+    [1,1,0,1,0,1,1,0,0,1,0,0,0,1,0,1,0,1,1,0]
+  ],
+  "in_y_pos": [ [97321],[143963],[30089],[83936],[40821],[54358],[106308],[61942],[49049],[38546],[1763],[25160],[43361],[64217],[46016],[93416],[65734],[68009],[263790],[205393]  ],
+  "in_y_sign": [ [0],[0],[1],[1],[0],[1],[1],[1],[1],[0],[0],[1],[1],[1],[1],[1],[1],[1],[0],[0] ]
+}
+*/
 
 
-/////////////////////////////////////////////////
+include "../../../circomlib/circuits/mimcsponge.circom";
+include "../../../circomlib/circuits/poseidon.circom";
+include "./mycircomlib/hash_dummy.circom";
+include "./mycircomlib/zero.circom";
 
 
-template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc) {
-    signal private input in_x_pos[k][n];
-    signal private input in_x_sign[k][n];
-    signal private input in_y_pos[n][1];
-    signal private input in_y_sign[n][1];
-    signal private input in_xx_inv_pos[k][k];
-    signal private input in_xx_inv_sign[k][k];
-    //public inputs:
-    signal input in_k;
-    signal input in_n;
-    signal input in_dec;
-    signal input in_xy_merkleroot;
-    signal input in_Lap_X_pos[DP_acc - 1];
-    signal input in_DP_acc;
-    signal input in_hash_BC;
-    signal input in_b_noisy_true_pos[k][1];
-    signal input in_b_noisy_true_sign[k][1];
-    signal input in_require_XX_acc;
-    signal input in_require_XX_inv_maxnorm;
-    signal input in_require_X_trans_Y_maxnorm;
-    signal input in_require_b_noisy_acc;
+// hash_alg | choose hash-algorithm: 0 for MiMC or 1 for Poseidon
 
-    //
-    // 0. step | Prerequisites: make sure that input variables are correct
-    //
-
-    assert (
-        k == in_k &&
-        n == in_n &&
-        dec == in_dec &&
-        require_XX_acc == in_require_XX_acc &&
-        require_XX_inv_maxnorm == in_require_XX_inv_maxnorm &&
-        require_X_trans_Y_maxnorm == in_require_X_trans_Y_maxnorm &&
-        require_b_noisy_acc == in_require_b_noisy_acc &&
-        DP_acc == in_DP_acc
-    );
+template MerkleProof_six(k, n, level, hash_alg) {
+    signal input in_x_pos[k][n];
+    signal input in_x_sign[k][n];
+    signal input in_y_pos[n][1];
+    signal input in_y_sign[n][1];
+    signal output out;
 
 
     //
-    // 1. step | Check xy_merkleroot
+    // 1. step | generate data_leaf (row vector) containing in_y and in_x as well as 0s to fill it until 2**level
     //
 
-    component xy_merkleproof = MerkleProof_six(k, n, merkle_level, hash_alg);
-
-    //assign inputs
-    for (var j = 0; j < k; j++) {
-        for (var i = 0; i < n; i++) {
-            xy_merkleproof.in_x_pos[j][i] <== in_x_pos[j][i];
-            xy_merkleproof.in_x_sign[j][i] <== in_x_sign[j][i];
-        }
-    }
+    var tmp_leaf = 0;
+    var data_leafs = 2**(level - 1) * 6;
+    signal data_leaf[data_leafs];
+    signal tmp_y_sign[n];
     for (var i = 0; i < n; i++) {
-        xy_merkleproof.in_y_pos[i][0] <== in_y_pos[i][0];
-        xy_merkleproof.in_y_sign[i][0] <== in_y_sign[i][0];
+        tmp_y_sign[i] <== in_y_sign[i][0] * in_y_pos[i][0];
+        data_leaf[tmp_leaf] <== in_y_pos[i][0] - 2 * tmp_y_sign[i];
+        tmp_leaf++;
     }
-
-    //make sure that root is correct
-    in_xy_merkleroot === xy_merkleproof.out;
-
-
-    //
-    // 2. step | XX range proof
-    //
-
-    //XX range proof
-    component XX_rangeproof = XX_RangeProof(k, n, require_XX_acc, dec);
-
-    //assign inputs
-    for (var j = 0; j < k; j++) {
+    // row k=1 is not being included since it's only 1s
+    signal tmp_x_sign[k-1][n];
+    for (var j = 1; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            XX_rangeproof.in_x_pos[j][i] <== in_x_pos[j][i];
-            XX_rangeproof.in_x_sign[j][i] <== in_x_sign[j][i];
-        }
-    }
-    for (var j = 0; j < k; j++) {
-        for (var i = 0; i < k; i++) {
-            XX_rangeproof.in_xx_inv_pos[j][i] <== in_xx_inv_pos[j][i];
-            XX_rangeproof.in_xx_inv_sign[j][i] <== in_xx_inv_sign[j][i];
+            tmp_x_sign[j-1][i] <== in_x_sign[j][i] * in_x_pos[j][i];
+            data_leaf[tmp_leaf] <== in_x_pos[j][i] - 2 * tmp_x_sign[j-1][i];
+            tmp_leaf++;
         }
     }
 
-    //make sure that output >= require_XX_acc
-    var bits_range_XX_acc = 0;
-    while ( (2**bits_range_XX_acc + 3) < require_XX_acc) {
-        bits_range_XX_acc++;
+    //assign 0 to those elements, that are not y nor x (while i < 2**level)
+    for (var i = tmp_leaf; i < data_leafs; i++) {
+        data_leaf[i] <== 0;
     }
-    component range_XX_acc = GreaterEqThan(bits_range_XX_acc);
-    range_XX_acc.in[0] <== XX_rangeproof.check_XX_minacc;
-    range_XX_acc.in[1] <== in_require_XX_acc;
-    1 === range_XX_acc.out;
 
+    /*
+    1   0
+    2   0
+    3   1
+    5   3
+    9   6
+    17  15
+    */
 
     //
-    // 3. step | range proof max element matrix norm for XX_inv
+    // 2. step | build tree
     //
 
-    //get max element
-    var bits_maxelement_XX_inv_pos = 0;
-    while ( (2**bits_maxelement_XX_inv_pos + 2) < require_XX_inv_maxnorm ) {
-        bits_maxelement_XX_inv_pos++;
+    component hash_tree[level][2**(level - 1)];
+
+    var used_data_leafs = (k-1)*n + n;
+    var empty_data_leafs = data_leafs - used_data_leafs;
+
+    var leafs = 2**(level - 1);
+    var empty_leafs = empty_data_leafs \ 6;
+    var used_leafs = leafs - empty_leafs;
+
+    // hash used_leafs (6 data_leafs in each hash)
+    for (var i = 0; i < used_leafs; i++) {
+        // MiMC merkle tree
+        if (hash_alg == 0) {
+            hash_tree[0][i] = MiMCSponge(6, 220, 1);
+            hash_tree[0][i].k <== 0;
+            for (var i_tmp = 0; i_tmp < 6; i_tmp++) {
+                hash_tree[0][i].ins[i_tmp] <== data_leaf[i*6 + i_tmp];
+            }
+        // Poseidon merkle tree
+        } else if (hash_alg == 1) {
+            hash_tree[0][i] = Poseidon(6);
+            for (var i_tmp = 0; i_tmp < 6; i_tmp++) {
+                hash_tree[0][i].inputs[i_tmp] <== data_leaf[i*6 + i_tmp];
+            }
+        }
     }
-    component maxelement_XX_inv_pos = NormMaxElement(k, k, bits_maxelement_XX_inv_pos);
-    for (var j = 0; j < k; j++) {
-        for (var i = 0; i < k; i++) {
-            maxelement_XX_inv_pos.in[j][i] <== in_xx_inv_pos[j][i];
+    // assign empty_leafs
+    for (var i = used_leafs; i < used_leafs + empty_leafs; i++) {
+        // MiMC merkle tree
+        if (hash_alg == 0) {
+            hash_tree[0][i] = MiMCDummy_six();
+            hash_tree[0][i].in <== 1;
+        // Poseidon merkle tree
+        } else if (hash_alg == 1) {
+            hash_tree[0][i] = PoseidonDummy_six();
+            hash_tree[0][i].in <== 1;
         }
     }
 
-    //check range
-    var bits_range_XX_inv_norm = 0;
-    while ( (2**bits_range_XX_inv_norm + 2) < require_XX_inv_maxnorm ) {
-        bits_range_XX_inv_norm++;
+    // build merkle tree, starting at level 1
+    var nodes = leafs \ 2;
+    var empty_nodes = empty_leafs \ 2;
+    var used_nodes = nodes - empty_nodes;
+
+    var delta;
+    var end;
+    for (var l = 1; l < level; l++) {
+        end = 2**(level - 1 - l);
+        delta = 0;
+        for (var i = 0; i < end; i++) {
+            // MiMC merkle tree
+            if (hash_alg == 0) {
+                if (i < used_nodes) {
+                    hash_tree[l][i] = MiMCSponge(2, 220, 1);
+                    hash_tree[l][i].ins[0] <== hash_tree[l - 1][i + delta].outs[0];
+                    hash_tree[l][i].ins[1] <== hash_tree[l - 1][i + 1 + delta].outs[0];
+                    hash_tree[l][i].k <== 0;
+                    delta++;
+                } else {
+                    hash_tree[l][i] = MiMCDummy_two();
+                    hash_tree[l][i].in <== 1;
+                }
+            // Poseidon merkle tree
+            } else if (hash_alg == 1) {
+                if (i < used_nodes) {
+                    hash_tree[l][i] = Poseidon(2);
+                    hash_tree[l][i].inputs[0] <== hash_tree[l - 1][i + delta].out;
+                    hash_tree[l][i].inputs[1] <== hash_tree[l - 1][i + 1 + delta].out;
+                    delta++;
+                } else {
+                    hash_tree[l][i] = PoseidonDummy_two();
+                    hash_tree[l][i].in <== 1;
+                }
+            }
+        }
+        nodes = nodes \ 2;
+        empty_nodes = empty_nodes \ 2;
+        used_nodes = nodes - empty_nodes;
     }
-    component range_XX_inv_norm = LessEqThan(bits_range_XX_inv_norm);
-    range_XX_inv_norm.in[0] <== in_k * maxelement_XX_inv_pos.out;
-    range_XX_inv_norm.in[1] <== in_require_XX_inv_maxnorm;
 
-    //make sure that in_k * maxelement_XX_inv_pos.out <= in_require_XX_inv_maxnorm;
-    1 === range_XX_inv_norm.out;
-
-
-    //
-    // 4. step | range proof max element matrix norm for X_trans_Y
-    //
-
-    // compute X_trans_Y (k x 1) = X (k x n) * Y (n x 1)
-    component X_trans_Y_mult = MatrixMult(n, k, 1);
-    for (var j = 0; j < k; j++) {
-        for (var i = 0; i < n; i++) {
-            X_trans_Y_mult.in_a[j][i] <== in_x_pos[j][i];
-            X_trans_Y_mult.in_a_sign[j][i] <== in_x_sign[j][i];
+    // assign yet unassigned elements of hash_tree (throws error if not done)
+    for (var l = 0; l < level; l++) {
+        end = 2**(level - 1 - l);
+        for (var i = end; i < 2**(level - 1); i++) {
+            hash_tree[l][i] = Zero();
+            hash_tree[l][i].in <== 0;
         }
     }
-    for (var i = 0; i < n; i++) {
-        X_trans_Y_mult.in_b[i][0] <== in_y_pos[i][0];
-        X_trans_Y_mult.in_b_sign[i][0] <== in_y_sign[i][0];
-    }
-
-    //get max element
-    var bits_range_X_trans_Y_norm = 0;
-    while ( (2**bits_range_X_trans_Y_norm + 2) < require_X_trans_Y_maxnorm ) {
-        bits_range_X_trans_Y_norm++;
-    }
-    component maxelement_X_trans_Y_pos = VectorNormMaxElement(k, bits_range_X_trans_Y_norm);
-    for (var j = 0; j < k; j++) {
-        maxelement_X_trans_Y_pos.in[j] <== X_trans_Y_mult.out[j][0];
-    }
-
-    //check range
-    var bits_maxelement_X_trans_Y_pos = 0;
-    while ( (2**bits_maxelement_X_trans_Y_pos + 2) < require_X_trans_Y_maxnorm ) {
-        bits_maxelement_X_trans_Y_pos++;
-    }
-    component range_X_trans_Y_norm = LessEqThan(bits_maxelement_X_trans_Y_pos);
-    range_X_trans_Y_norm.in[0] <== in_k * maxelement_X_trans_Y_pos.out;
-    range_X_trans_Y_norm.in[1] <== in_require_X_trans_Y_maxnorm;
-
-    //make sure that in_k * maxelement_X_trans_Y_pos.out <= in_require_X_trans_Y_maxnorm;
-    1 === range_X_trans_Y_norm.out;
 
 
-    //
-    // 5. step | b range proof
-    //
-
-    component b_rangeproof = b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc);
-
-    //assign inputs
-    for (var j = 0; j < k; j++) {
-        for (var i = 0; i < n; i++) {
-            b_rangeproof.in_x_pos[j][i] <== in_x_pos[j][i];
-            b_rangeproof.in_x_sign[j][i] <== in_x_sign[j][i];
-        }
+    // assign output
+    if (hash_alg == 0) {
+        // MiMC
+        out <== hash_tree[level-1][0].outs[0];
+    } else if (hash_alg == 1) {
+        // Poseidon
+        out <== hash_tree[level-1][0].out;
     }
-    for (var j = 0; j < k; j++) {
-        for (var i = 0; i < k; i++) {
-            b_rangeproof.in_xx_inv_pos[j][i] <== in_xx_inv_pos[j][i];
-            b_rangeproof.in_xx_inv_sign[j][i] <== in_xx_inv_sign[j][i];
-        }
-    }
-    for (var i = 0; i < n; i++) {
-        b_rangeproof.in_y_pos[i][0] <== in_y_pos[i][0];
-        b_rangeproof.in_y_sign[i][0] <== in_y_sign[i][0];
-    }
-    for (var i = 0; i < (DP_acc - 1); i++) {
-        b_rangeproof.in_Lap_X_pos[i] <== in_Lap_X_pos[i];
-    }
-    b_rangeproof.in_hash_BC <== in_hash_BC;
-    b_rangeproof.in_DP_acc <== in_DP_acc;
-    for (var j = 0; j < k; j++) {
-        b_rangeproof.in_b_noisy_true_pos[j][0] <== in_b_noisy_true_pos[j][0];
-        b_rangeproof.in_b_noisy_true_sign[j][0] <== in_b_noisy_true_sign[j][0];
-    }
-
-    //check output
-    var bits_range_b_noisy_acc = 0;
-    while ( (2**bits_range_b_noisy_acc + 3) < require_b_noisy_acc) {
-        bits_range_b_noisy_acc++;
-    }
-    component range_b_noisy_acc = GreaterEqThan(require_b_noisy_acc);
-    range_b_noisy_acc.in[0] <== b_rangeproof.check_b_noisy_minacc;
-    range_b_noisy_acc.in[1] <== in_require_b_noisy_acc;
-    1 === range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(5, 20, 5, 6, 3, 100000, 5000000000000, 3, 1, 100);
-//cf. LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc)
+component main = MerkleProof_six(5, 40, 7, 1);
+//cf. MerkleProof_six(k, n, level, hash_alg)
