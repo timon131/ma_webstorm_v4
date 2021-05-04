@@ -22,10 +22,10 @@
 */
 
 
-include "../../../../circomlib/circuits/mimcsponge.circom";
-include "../../../../circomlib/circuits/poseidon.circom";
-include "hash_dummy.circom";
-include "zero.circom";
+include "../../../circomlib/circuits/mimcsponge.circom";
+include "../../../circomlib/circuits/poseidon.circom";
+include "./mycircomlib/hash_dummy.circom";
+include "./mycircomlib/zero.circom";
 
 
 // hash_alg | choose hash-algorithm: 0 for MiMC or 1 for Poseidon
@@ -36,6 +36,7 @@ template MerkleProof_six(k, n, level, hash_alg) {
     signal input in_y_pos[n][1];
     signal input in_y_sign[n][1];
     signal output out;
+    signal output tmp[level][2**(level - 1)];
 
 
     //
@@ -43,8 +44,8 @@ template MerkleProof_six(k, n, level, hash_alg) {
     //
 
     var tmp_leaf = 0;
-    var leafs = 2**(level - 1) * 6;
-    signal data_leaf[leafs];
+    var data_leafs = 2**(level - 1) * 6;
+    signal data_leaf[data_leafs];
     signal tmp_y_sign[n];
     for (var i = 0; i < n; i++) {
         tmp_y_sign[i] <== in_y_sign[i][0] * in_y_pos[i][0];
@@ -62,30 +63,24 @@ template MerkleProof_six(k, n, level, hash_alg) {
     }
 
     //assign 0 to those elements, that are not y nor x (while i < 2**level)
-    for (var i = tmp_leaf; i < leafs; i++) {
+    for (var i = tmp_leaf; i < data_leafs; i++) {
         data_leaf[i] <== 0;
     }
 
-    //make sure that "empty leafs" are not being hashed
-    var used_leafs = 2**(level - 1) - ((leafs - ((k-1)*n + n)) \ 6);
+    //
+    // 2. step | build tree
+    //
+
     component hash_tree[level][2**(level - 1)];
-    for (var i = used_leafs; i < 2**(level - 1); i++) {
-        // MiMC merkle tree
-        if (hash_alg == 0) {
-            hash_tree[0][i] = MiMCDummy_six();
-            hash_tree[0][i].in <== 1;
-        // Poseidon merkle tree
-        } else if (hash_alg == 1) {
-            hash_tree[0][i] = PoseidonDummy_six();
-            hash_tree[0][i].in <== 1;
-        }
-    }
 
+    var used_data_leafs = (k-1)*n + n;
+    var empty_data_leafs = data_leafs - used_data_leafs;
 
-    //
-    // 2. step | create hash leafs (6 data leafs in each hash)
-    //
+    var leafs = 2**(level - 1);
+    var empty_leafs = empty_data_leafs \ 6;
+    var used_leafs = leafs - empty_leafs;
 
+    // hash used_leafs (6 data_leafs in each hash)
     for (var i = 0; i < used_leafs; i++) {
         // MiMC merkle tree
         if (hash_alg == 0) {
@@ -102,11 +97,23 @@ template MerkleProof_six(k, n, level, hash_alg) {
             }
         }
     }
+    // assign empty_leafs
+    for (var i = used_leafs; i < used_leafs + empty_leafs; i++) {
+        // MiMC merkle tree
+        if (hash_alg == 0) {
+            hash_tree[0][i] = MiMCDummy_six();
+            hash_tree[0][i].in <== 1;
+        // Poseidon merkle tree
+        } else if (hash_alg == 1) {
+            hash_tree[0][i] = PoseidonDummy_six();
+            hash_tree[0][i].in <== 1;
+        }
+    }
 
-
-    //
-    // 3. step | build merkle tree, starting at level 1
-    //
+    // build merkle tree, starting at level 1
+    var nodes = leafs \ 2;
+    var empty_nodes = empty_leafs \ 2;
+    var used_nodes = nodes - empty_nodes;
 
     var delta;
     var end;
@@ -116,22 +123,34 @@ template MerkleProof_six(k, n, level, hash_alg) {
         for (var i = 0; i < end; i++) {
             // MiMC merkle tree
             if (hash_alg == 0) {
-                hash_tree[l][i] = MiMCSponge(2, 220, 1);
-
-                hash_tree[l][i].ins[0] <== hash_tree[l - 1][i + delta].outs[0];
-                hash_tree[l][i].ins[1] <== hash_tree[l - 1][i + 1 + delta].outs[0];
-                hash_tree[l][i].k <== 0;
-                delta++;
+                if (i < used_nodes) {
+                    hash_tree[l][i] = MiMCSponge(2, 220, 1);
+                    hash_tree[l][i].ins[0] <== hash_tree[l - 1][i + delta].outs[0];
+                    hash_tree[l][i].ins[1] <== hash_tree[l - 1][i + 1 + delta].outs[0];
+                    hash_tree[l][i].k <== 0;
+                    delta++;
+                } else {
+                    hash_tree[l][i] = MiMCDummy_two();
+                    hash_tree[l][i].in <== 1;
+                }
             // Poseidon merkle tree
             } else if (hash_alg == 1) {
-                hash_tree[l][i] = Poseidon(2);
-
-                hash_tree[l][i].inputs[0] <== hash_tree[l - 1][i + delta].out;
-                hash_tree[l][i].inputs[1] <== hash_tree[l - 1][i + 1 + delta].out;
-                delta++;
+                if (i < used_nodes) {
+                    hash_tree[l][i] = Poseidon(2);
+                    hash_tree[l][i].inputs[0] <== hash_tree[l - 1][i + delta].out;
+                    hash_tree[l][i].inputs[1] <== hash_tree[l - 1][i + 1 + delta].out;
+                    delta++;
+                } else {
+                    hash_tree[l][i] = PoseidonDummy_two();
+                    hash_tree[l][i].in <== 1;
+                }
             }
         }
+        nodes = nodes \ 2;
+        empty_nodes = empty_nodes \ 2;
+        used_nodes = nodes - empty_nodes;
     }
+
     // assign yet unassigned elements of hash_tree (throws error if not done)
     for (var l = 0; l < level; l++) {
         end = 2**(level - 1 - l);
@@ -150,7 +169,13 @@ template MerkleProof_six(k, n, level, hash_alg) {
         // Poseidon
         out <== hash_tree[level-1][0].out;
     }
+
+    for (var j = 0; j < level; j++) {
+        for (var i = 0; i < 2**(level - 1); i++) {
+            tmp[j][i] <== hash_tree[j][i].out;
+        }
+    }
 }
 
-//component main = MerkleProof_six(5, 20, 6, 1);
+component main = MerkleProof_six(5, 20, 6, 1);
 //cf. MerkleProof_six(k, n, level, hash_alg)

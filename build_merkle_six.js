@@ -30,7 +30,7 @@ let t_x_round_sign =
 let t_y_round_pos = [ [97321],[143963],[30089],[83936],[40821],[54358],[106308],[61942],[49049],[38546],[1763],[25160],[43361],[64217],[46016],[93416],[65734],[68009],[263790],[205393]  ];
 let t_y_round_sign = [ [0],[0],[1],[1],[0],[1],[1],[1],[1],[0],[0],[1],[1],[1],[1],[1],[1],[1],[0],[0] ];
 
-let test = build_merkletree(t_x_round_pos, t_x_round_sign, t_y_round_pos, t_y_round_sign, 0)
+let test = build_merkletree(t_x_round_pos, t_x_round_sign, t_y_round_pos, t_y_round_sign, 1)
 console.log(test.tree)
 */
 
@@ -90,7 +90,6 @@ function build_merkletree(x_round_pos, x_round_sign, y_round_pos, y_round_sign, 
     //initialize merkle tree depth (i.e., level)
     //const level = Math.ceil(Math.log2(data_leafs.length));
     const level = Math.ceil(Math.log2(data_leafs.length / 6) + 1);
-    console.log(level)
 
     //fill all empty "cells" of leafs array with 0s
     for (let i = data_leafs.length; i < (2**(level-1) * 6); i++) {

@@ -1,6 +1,6 @@
 template Zero() {
     signal input in;
-    signal output outs[1];
+    signal output out;
 
-    outs[0] <== 0 * in;
+    out <== 0 * in;
 }
