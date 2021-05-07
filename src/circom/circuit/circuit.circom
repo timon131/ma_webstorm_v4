@@ -32,6 +32,8 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_max
     signal input in_require_XX_inv_maxnorm;
     signal input in_require_X_trans_Y_maxnorm;
     signal input in_require_b_noisy_acc;
+    //dummy output
+    signal output out;
 
     //
     // 0. step | Prerequisites: make sure that input variables are correct
@@ -94,7 +96,7 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_max
 
     //make sure that output >= require_XX_acc
     var bits_range_XX_acc = 0;
-    while ( (2**bits_range_XX_acc + 3) < require_XX_acc) {
+    while ( (2**bits_range_XX_acc + 3) < dec) {
         bits_range_XX_acc++;
     }
     component range_XX_acc = GreaterEqThan(bits_range_XX_acc);
@@ -207,14 +209,17 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_max
 
     //check output
     var bits_range_b_noisy_acc = 0;
-    while ( (2**bits_range_b_noisy_acc + 3) < require_b_noisy_acc) {
+    while ( (2**bits_range_b_noisy_acc + 3) < dec) {
         bits_range_b_noisy_acc++;
     }
     component range_b_noisy_acc = GreaterEqThan(require_b_noisy_acc);
     range_b_noisy_acc.in[0] <== b_rangeproof.check_b_noisy_minacc;
     range_b_noisy_acc.in[1] <== in_require_b_noisy_acc;
     1 === range_b_noisy_acc.out;
+
+    //define dummy output
+    out <== range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(5, 20, 5, 6, 3, 100000, 5000000000000, 3, 1, 100);
+component main = LinRegProof(5, 500, 5, 10, 2, 100000, 50000000000000, 3, 1, 100);
 //cf. LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc)

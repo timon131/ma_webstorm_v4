@@ -10,4 +10,4 @@ npx snarkit check ../../circuit --backend native --witness_type bin
 ../../../../rapidsnark/build/prover ../circuit_final.zkey ./data/witness.wtns ../proof.json ./data/output.json
 
 #verify the proof
-time snarkjs groth16 verify ../verification_key.json ./data/output.json ../proof.json
+snarkjs groth16 verify ../verification_key.json ./data/output.json ../proof.json

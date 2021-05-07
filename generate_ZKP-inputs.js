@@ -21,7 +21,7 @@ async function generate_ZKPinputs(l) {
     // define number of features k and sample size n
     let k = 4;
     k++;    //account for X: k+1 x n
-    const n = 20;
+    const n = 500;
     //const n_test = Math.round(n / 2);
     const n_test = 10;
 
@@ -38,9 +38,9 @@ async function generate_ZKPinputs(l) {
     const DP_hash_BC = BigInt("17758051187679994451203721828730993341951654331694709087352450464095838859238");
 
     //set accuracies for range proofs
-    const require_XX_acc = 3;
+    const require_XX_acc = 2;
     const require_XX_inv_maxnorm = 10 ** (dec);
-    const require_X_trans_Y_maxnorm = k * 10 ** ((2*dec) + 2);
+    const require_X_trans_Y_maxnorm = k * 10 ** ((2*dec) + 3);
     const require_b_noisy_acc = 3;
 
     //print sizes of input_public.json
