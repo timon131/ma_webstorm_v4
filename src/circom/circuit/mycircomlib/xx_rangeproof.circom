@@ -100,7 +100,7 @@ template XX_RangeProof(k, n, require_XX_acc, dec) {
 
     // get smallest element
     var bits_minelement = 0;
-    while ( (2**bits_minelement + 3) < dec ) {
+    while ( (2**bits_minelement + 3) < 3*dec ) {
         bits_minelement++;
     }
     component minelement = NormMinElement(k, k, bits_minelement);

@@ -42,6 +42,8 @@
   "in_hash_BC": "17758051187679994451203721828730993341951654331694709087352450464095838859238",
   "in_b_noisy_true_pos": [ ["301105"],["364580001203973"],["286229997186589"],["91230000616186"],["295439999306853"] ],
   "in_b_noisy_true_sign": [ [0],[0],[0],[0],[0] ],
+  "in_require_meanxn_acc": "3",
+  "in_require_varxn_acc": "3",
   "in_require_XX_acc": 2,
   "in_require_XX_inv_maxnorm": "100000",
   "in_require_X_trans_Y_maxnorm": "50000000000000",

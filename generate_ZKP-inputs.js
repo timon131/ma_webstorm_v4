@@ -21,7 +21,7 @@ async function generate_ZKPinputs(l) {
     // define number of features k and sample size n
     let k = 4;
     k++;    //account for X: k+1 x n
-    const n = 500;
+    const n = 50;
     //const n_test = Math.round(n / 2);
     const n_test = 10;
 
@@ -38,6 +38,8 @@ async function generate_ZKPinputs(l) {
     const DP_hash_BC = BigInt("17758051187679994451203721828730993341951654331694709087352450464095838859238");
 
     //set accuracies for range proofs
+    const require_meanxn_acc = 3;
+    const require_varxn_acc = 3;
     const require_XX_acc = 2;
     const require_XX_inv_maxnorm = 10 ** (dec);
     const require_X_trans_Y_maxnorm = k * 10 ** ((2*dec) + 3);
@@ -269,13 +271,13 @@ async function generate_ZKPinputs(l) {
     //public inputs
 
     //write k
-    file_params.write("  \"in_k\": " + k + ",\n");
+    file_params.write("  \"in_k\": \"" + k + "\",\n");
 
     //write n
-    file_params.write("  \"in_n\": " + n + ",\n");
+    file_params.write("  \"in_n\": \"" + n + "\",\n");
 
     //write dec
-    file_params.write("  \"in_dec\": " + dec + ",\n");
+    file_params.write("  \"in_dec\": \"" + dec + "\",\n");
 
     //write merkle root
     file_params.write("  \"in_xy_merkleroot\": \"" + xy_tree.root + "\",\n");
@@ -284,14 +286,14 @@ async function generate_ZKPinputs(l) {
     file_params.write("  \"in_Lap_X_pos\": [");
     for (let j = 0; j < Lap_X_pos.length; j++) {
         if (j != Lap_X_pos.length - 1) {
-            file_params.write(Lap_X_pos[j] + ",");
+            file_params.write("\"" + Lap_X_pos[j] + "\",");
         } else {
-            file_params.write(Lap_X_pos[j] + "],\n");
+            file_params.write("\"" + Lap_X_pos[j] + "\"],\n");
         }
     }
 
     //write in_DP_sig_acc
-    file_params.write("  \"in_DP_acc\": " + DP_acc + ",\n");
+    file_params.write("  \"in_DP_acc\": \"" + DP_acc + "\",\n");
 
     //write in_hash_BC
     file_params.write("  \"in_hash_BC\": \"" + DP_hash_BC + "\",\n");
@@ -317,8 +319,14 @@ async function generate_ZKPinputs(l) {
     }
     file_params.write(" ],\n");
 
+    //write require_meanxn_acc
+    file_params.write("  \"in_require_meanxn_acc\": \"" + require_meanxn_acc + "\",\n");
+
+    //write require_varxn_acc
+    file_params.write("  \"in_require_varxn_acc\": \"" + require_varxn_acc + "\",\n");
+
     //write require_XX_acc
-    file_params.write("  \"in_require_XX_acc\": " + require_XX_acc + ",\n");
+    file_params.write("  \"in_require_XX_acc\": \"" + require_XX_acc + "\",\n");
 
     //write require_XX_inv_maxnorm
     file_params.write("  \"in_require_XX_inv_maxnorm\": \"" + require_XX_inv_maxnorm + "\",\n");
@@ -327,7 +335,7 @@ async function generate_ZKPinputs(l) {
     file_params.write("  \"in_require_X_trans_Y_maxnorm\": \"" + require_X_trans_Y_maxnorm + "\",\n");
 
     //write require_b_noisy_acc
-    file_params.write("  \"in_require_b_noisy_acc\": " + require_b_noisy_acc + "\n");
+    file_params.write("  \"in_require_b_noisy_acc\": \"" + require_b_noisy_acc + "\"\n");
 
     file_params.write("}");
     file_params.end();

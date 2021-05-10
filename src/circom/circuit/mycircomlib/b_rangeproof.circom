@@ -75,7 +75,7 @@ template b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc) {
         DP_noise.in_b_sign[j][0] <== y_mult.out_sign[j][0];
     }
     DP_noise.in_hash_BC <== in_hash_BC;
-    DP_noise.in_DP_sig_acc <== in_DP_acc;
+    DP_noise.in_DP_acc <== in_DP_acc;
     for (var i = 0; i < (DP_acc - 1); i++) {
         DP_noise.in_Lap_X_pos[i] <== in_Lap_X_pos[i];
     }
@@ -92,6 +92,7 @@ template b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc) {
     }
 
     // calculate range per element
+    assert (3*dec >= require_b_noisy_acc);
     component b_range[k] = Range(3*dec, require_b_noisy_acc, bits_absdiff_b_range);
     signal tmp_DP_noise_out_b[k];
     signal tmp_in_b_noisy_true[k];
@@ -110,7 +111,7 @@ template b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc) {
 
     // get smallest element
     var bits_b_minelement = 0;
-    while ( (2**bits_b_minelement + 3) < require_b_noisy_acc ) {
+    while ( (2**bits_b_minelement + 3) < 3*dec ) {
         bits_b_minelement++;
     }
     component b_minelement = VectorNormMinElement(k, bits_b_minelement);

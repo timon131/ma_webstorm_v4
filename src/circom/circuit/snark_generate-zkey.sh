@@ -16,3 +16,4 @@ snarkjs zkey contribute circuit_0000.zkey circuit_final.zkey --name="1st Contrib
 # Export the verification key
 snarkjs zkey export verificationkey circuit_final.zkey verification_key.json
 # Infos about the circuit
+snarkjs info -c circuit.r1cs

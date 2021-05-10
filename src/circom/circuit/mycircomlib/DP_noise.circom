@@ -14,29 +14,28 @@ include "sigsum.circom";
                "16364053547983670647819591243427318474970523402678363770466439012242959451919",
                "17829265254908479636114238610902303506876092751861389338423823809672124796570"
              ],
-  "sig_acc": 100,
+  "in_DP_acc": 100,
   "in_Rand_X": [3912023,3218876,2813411,2525729,2302585,2120264,1966113,1832581,1714798,1609438,1514128,1427116,1347074,1272966,1203973,1139434,1078810,1021651,967584,916291,867501,820981,776529,733969,693147,653926,616186,579818,544727,510826,478036,446287,415515,385662,356675,328504,301105,274437,248461,223144,198451,174353,150823,127833,105361,83382,61875,40822,20203,0,20203,40822,61875,83382,105361,127833,150823,174353,198451,223144,248461,274437,301105,328504,356675,385662,415515,446287,478036,510826,544727,579818,616186,653926,693147,733969,776529,820981,867501,916291,967584,1021651,1078810,1139434,1203973,1272966,1347074,1427116,1514128,1609438,1714798,1832581,1966113,2120264,2302585,2525729,2813411,3218876,3912023]
 }
 */
 
 //returns random variable that belongs to hash randomness
     //in_hash must be in brackets!
-    //acc must be some power of 10 (i.e., 10**x)
 template DP_GetRandomVar(k, var_acc) {
     signal input in_hash[k];
-    signal input sig_acc;
+    signal input in_DP_acc;
     signal input in_Rand_X[var_acc - 1];
     signal output out[k];
     signal output out_sign[k];
 
-    //getP = last numbers of hash (e.g., last two numbers [0, 99] for sig_acc == 100)
+    //getP = last numbers of hash (e.g., last two numbers [0, 99] for in_DP_acc == 100)
     signal getP[k];
     signal tmp_getP[k];
     signal div[k];
     for (var j = 0; j < k; j++) {
-        div[j] <-- in_hash[j] \ sig_acc;
-        tmp_getP[j] <-- in_hash[j] % sig_acc;
-        div[j] * sig_acc + tmp_getP[j] === in_hash[j];
+        div[j] <-- in_hash[j] \ in_DP_acc;
+        tmp_getP[j] <-- in_hash[j] % in_DP_acc;
+        div[j] * in_DP_acc + tmp_getP[j] === in_hash[j];
     }
 
     //make sure that getP != 0% and getP != 100%
@@ -80,8 +79,8 @@ template DP_GetRandomVar(k, var_acc) {
     component comp_sign[k] = LessThan(n);
     for (var j = 0; j < k; j++) {
         comp_sign[j].in[0] <== getP[j];
-        comp_sign[j].in[1] <-- sig_acc \ 2;
-        comp_sign[j].in[1] * 2 === sig_acc;
+        comp_sign[j].in[1] <-- in_DP_acc \ 2;
+        comp_sign[j].in[1] * 2 === in_DP_acc;
         out_sign[j] <== comp_sign[j].out;
     }
 }
@@ -95,7 +94,7 @@ template DP_GetRandomVar(k, var_acc) {
   "in_hash_y_pos": [ [117020],[102748],[20291],[205292],[193663] ],
   "in_hash_y_sign": [ [0],[0],[0],[0],[0] ],
   "in_hash_BC": "17758051187679994451203721828730993341951654331694709087352450464095838859238",
-  "in_DP_sig_acc": 100,
+  "in_DP_acc": 100,
   "in_Lap_X_pos": [3912023,3218876,2813411,2525729,2302585,2120264,1966113,1832581,1714798,1609438,1514128,1427116,1347074,1272966,1203973,1139434,1078810,1021651,967584,916291,867501,820981,776529,733969,693147,653926,616186,579818,544727,510826,478036,446287,415515,385662,356675,328504,301105,274437,248461,223144,198451,174353,150823,127833,105361,83382,61875,40822,20203,0,20203,40822,61875,83382,105361,127833,150823,174353,198451,223144,248461,274437,301105,328504,356675,385662,415515,446287,478036,510826,544727,579818,616186,653926,693147,733969,776529,820981,867501,916291,967584,1021651,1078810,1139434,1203973,1272966,1347074,1427116,1514128,1609438,1714798,1832581,1966113,2120264,2302585,2525729,2813411,3218876,3912023],
   "in_b_pos": [ [0],[879000000000000],[174440000000000],[152880000000000],[9250000000000] ],
   "in_b_sign": [ [0],[0],[1],[1],[1] ]
@@ -107,7 +106,7 @@ template DP_CalculateB(k, hash_alg, DP_acc) {
     signal input in_hash_y_pos[k][1];
     signal input in_hash_y_sign[k][1];
     signal input in_hash_BC;
-    signal input in_DP_sig_acc;
+    signal input in_DP_acc;
     signal input in_Lap_X_pos[DP_acc - 1];
     signal input in_b_pos[k][1];
     signal input in_b_sign[k][1];
@@ -153,7 +152,7 @@ template DP_CalculateB(k, hash_alg, DP_acc) {
             DP_get_RandVar.in_hash[j] <== DP_hash[j].out;
         }
     }
-    DP_get_RandVar.sig_acc <== in_DP_sig_acc;
+    DP_get_RandVar.in_DP_acc <== in_DP_acc;
     for (var i = 0; i < (DP_acc - 1); i++) {
         DP_get_RandVar.in_Rand_X[i] <== in_Lap_X_pos[i];
     }
