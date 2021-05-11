@@ -3,7 +3,7 @@ const build_merkle_six = require ("./build_merkle_six.js");
 const params = require ("./params.js");
 const data_prep = require ("./data_prep.js");
 const DP_noise = require ("./DP_noise.js");
-const cost = require ("./cost.js");
+const cost = require ("./calc_cost.js");
 const fs = require ("fs");
 
 ////////////////////////////////
@@ -21,7 +21,7 @@ async function generate_ZKPinputs(l) {
     // define number of features k and sample size n
     let k = 4;
     k++;    //account for X: k+1 x n
-    const n = 50;
+    const n = 600;
     //const n_test = Math.round(n / 2);
     const n_test = 10;
 
@@ -134,7 +134,7 @@ async function generate_ZKPinputs(l) {
     */
 
     //get test data x and y
-    const data_test = await data_prep.prepare_housing_test(csvFilePath, k, n_test);
+    const data_test = await data_prep.prepare_housing_shuffle(csvFilePath, k, n_test);
     const data_test_round = params.prepare_data_test(data_test[0], data_test[1], k, n_test, dec);
     const x_test_round_pos = data_test_round[0];
     const x_test_round_sign = data_test_round[1];

@@ -8,6 +8,33 @@
 
 ##########################################
 
+# clear files
+rm ../calcwit.cpp
+rm ../calcwit.hpp
+rm ../circom.hpp
+rm ../circuit.cpp
+rm ../circuit.dat
+rm ../circuit.fast
+rm ../circuit.fast.dat
+rm ../circuit.r1cs
+rm ../circuit.sym
+rm ../circuit_0000.zkey
+rm ../circuit_final.zkey
+rm ../fr.asm
+rm ../fr.cpp
+rm ../fr.hpp
+rm ../fr.o
+rm ../main.cpp
+rm ../proof.json
+rm ../utils.cpp
+rm ../utils.hpp
+rm ../verification_key.json
+
+rm data/witness.wtns
+rm data/output.json
+touch data/output.json
+
+
 # Building circuit
 npx snarkit compile ../../circuit --backend native
 

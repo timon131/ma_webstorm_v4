@@ -1,4 +1,5 @@
 include "../../../circomlib/circuits/comparators.circom";
+include "./mycircomlib/stats.circom";
 include "./mycircomlib/matrixmult.circom";
 include "./mycircomlib/range.circom";
 include "./mycircomlib/DP_noise.circom";
@@ -11,7 +12,9 @@ include "./mycircomlib/b_rangeproof.circom";
 /////////////////////////////////////////////////
 
 
-template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc) {
+template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_acc, require_XX_acc,
+        require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc) {
+
     signal private input in_x_pos[k][n];
     signal private input in_x_sign[k][n];
     signal private input in_y_pos[n][1];
@@ -28,6 +31,8 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_max
     signal input in_hash_BC;
     signal input in_b_noisy_true_pos[k][1];
     signal input in_b_noisy_true_sign[k][1];
+    signal input in_require_meanxn_acc;
+    signal input in_require_varxn_acc;
     signal input in_require_XX_acc;
     signal input in_require_XX_inv_maxnorm;
     signal input in_require_X_trans_Y_maxnorm;
@@ -41,12 +46,68 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_max
         k == in_k &&
         n == in_n &&
         dec == in_dec &&
+        require_meanxn_acc == in_require_meanxn_acc &&
+        require_varxn_acc == in_require_varxn_acc &&
         require_XX_acc == in_require_XX_acc &&
         require_XX_inv_maxnorm == in_require_XX_inv_maxnorm &&
         require_X_trans_Y_maxnorm == in_require_X_trans_Y_maxnorm &&
         require_b_noisy_acc == in_require_b_noisy_acc &&
         DP_acc == in_DP_acc
     );
+
+
+    //
+    // 1. step | Check data normalization (i.e., mean = 0 and var = 1)
+    //
+
+    //check mean
+    component check_mean = Check_MeanXY(k, n, dec, require_meanxn_acc);
+    for (var j = 0; j < k; j++) {
+        for (var i = 0; i < n; i++) {
+            check_mean.in_x_pos[j][i] <== in_x_pos[j][i];
+            check_mean.in_x_sign[j][i] <== in_x_sign[j][i];
+        }
+    }
+    for (var i = 0; i < n; i++) {
+        check_mean.in_y_pos[i][0] <== in_y_pos[i][0];
+        check_mean.in_y_sign[i][0] <== in_y_sign[i][0];
+    }
+    //make sure that output >= require_meanxn_acc
+    var bits_range_meanxn_acc = 0;
+    while ( (2**bits_range_meanxn_acc + 3) < dec) {
+        bits_range_meanxn_acc++;
+    }
+    component range_meanxn_acc = GreaterEqThan(bits_range_meanxn_acc);
+    range_meanxn_acc.in[0] <== check_mean.out;
+    range_meanxn_acc.in[1] <== in_require_meanxn_acc;
+    1 === range_meanxn_acc.out;
+
+    //check var
+    //calculate dec_adjusted
+    var dec_adjusted = 2*dec;
+    while (10**dec_adjusted < n * 10**(2*dec)) {
+        dec_adjusted++;
+    }
+    dec_adjusted--;
+    component check_var = Check_VarXY(k, n, dec, dec_adjusted, require_varxn_acc);
+    for (var j = 0; j < k; j++) {
+        for (var i = 0; i < n; i++) {
+            check_var.in_x_pos[j][i] <== in_x_pos[j][i];
+        }
+    }
+    for (var i = 0; i < n; i++) {
+        check_var.in_y_pos[i][0] <== in_y_pos[i][0];
+    }
+    check_var.in_n <== in_n;
+    //make sure that output >= require_varxn_acc
+    var bits_range_varxn_acc = 0;
+    while ( (2**bits_range_varxn_acc + 3) < dec_adjusted) {
+        bits_range_varxn_acc++;
+    }
+    component range_varxn_acc = GreaterEqThan(bits_range_varxn_acc);
+    range_varxn_acc.in[0] <== check_var.out;
+    range_varxn_acc.in[1] <== in_require_varxn_acc;
+    1 === range_varxn_acc.out;
 
 
     //
@@ -94,7 +155,7 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_max
 
     //make sure that output >= require_XX_acc
     var bits_range_XX_acc = 0;
-    while ( (2**bits_range_XX_acc + 3) < dec) {
+    while ( (2**bits_range_XX_acc + 3) < 3*dec) {
         bits_range_XX_acc++;
     }
     component range_XX_acc = GreaterEqThan(bits_range_XX_acc);
@@ -207,7 +268,7 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_max
 
     //check output
     var bits_range_b_noisy_acc = 0;
-    while ( (2**bits_range_b_noisy_acc + 3) < dec) {
+    while ( (2**bits_range_b_noisy_acc + 3) < 3*dec) {
         bits_range_b_noisy_acc++;
     }
     component range_b_noisy_acc = GreaterEqThan(require_b_noisy_acc);
@@ -216,8 +277,10 @@ template LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_max
     1 === range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(5, 20, 5, 6, 2, 100000, 50000000000000, 3, 1, 100);
-//cf. LinRegProof(k, n, dec, merkle_level, require_XX_acc, require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc)
+component main = LinRegProof(5, 500, 5, 10, 3, 3, 2,
+    100000, 50000000000000, 3, 1, 100);
+//cf. LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_acc, require_XX_acc,
+//    require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc) {
 
 // time /bin/bash /home/timmel/WebstormProjects/ma_webstorm_v4/src/circom/circuit/snark_generate-zkey.sh
 // time /bin/bash /home/timmel/WebstormProjects/ma_webstorm_v4/src/circom/circuit/snark_prove-validate.sh

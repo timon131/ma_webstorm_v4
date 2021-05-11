@@ -12,7 +12,15 @@ async function prepare_housing(csvFilePath, k, n, l) {
 async function prepare_housing_test(csvFilePath, k, n_test) {
     const df = await importCsvToArray(csvFilePath);
     //console.log(csvArray);
-    const xy = await prepare_df_test(df, k, n_test);
+    const xy = await prepare_df_shuffle(df, k, n_test);
+    //console.log(xy);
+    return xy;
+}
+
+async function prepare_housing_shuffle(csvFilePath, k, n) {
+    const df = await importCsvToArray(csvFilePath);
+    //console.log(csvArray);
+    const xy = await prepare_df_shuffle(df, k, n);
     //console.log(xy);
     return xy;
 }
@@ -130,10 +138,10 @@ async function prepare_df(df, k, n, l) {
 
 
     return [x, y];
-    //return x;
+    //X: kxn | Y: nx1
 }
 
-async function prepare_df_test(df, k, n) {
+async function prepare_df_shuffle(df, k, n) {
     let df_out = [];
 
     // convert to array and dummify 'ocean_proximity'
@@ -146,7 +154,7 @@ async function prepare_df_test(df, k, n) {
     let i_count = 0;
     while (i_count < n) {
 
-        let i = Math.round( Math.random() * df.length );
+        let i = Math.round( Math.random() * (df.length - 1) );
         //console.log('i: ', i);
 
         nearbay = 0;    // NEAR BAY
@@ -245,35 +253,7 @@ async function prepare_df_test(df, k, n) {
 
 
     return [x, y];
-    //return x;
 }
-/*
-function prepare_housing(k, n) {
-    importCsvToArray().then(
-        function (df) {
-            //let data = prepare_df(df, k, n);
-            //console.log(data[0])
-            //return data[0];
-
-            let result = prepare_df(df, k, n).then(
-                function ([x, y]) {
-                    //console.log('x: \n', x);
-                    //console.log('y: \n', y);
-                    return [x, y];
-                },
-                function (error) {
-                    console.log(error);
-                }
-            )
-            return result;
-        },
-        function (error) {
-            console.log(error);
-        }
-    )
-}
-
-*/
 
 function MatrixTranspose(a) {
     var a_rows = a.length;
@@ -391,5 +371,6 @@ module.exports = {
     //functions:
     prepare_randomdata,
     prepare_housing,
-    prepare_housing_test
+    prepare_housing_test,
+    prepare_housing_shuffle
 }

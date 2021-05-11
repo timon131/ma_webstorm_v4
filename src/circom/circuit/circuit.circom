@@ -38,6 +38,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
     signal input in_require_X_trans_Y_maxnorm;
     signal input in_require_b_noisy_acc;
 
+
     //
     // 0. step | Prerequisites: make sure that input variables are correct
     //
@@ -277,8 +278,8 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
     1 === range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(5, 50, 5, 7, 3, 3, 2,
-    100000, 50000000000000, 3, 1, 100);
+component main = LinRegProof(5, 600, 5, 10, 2, 2, 2,
+    100000, 50000000000000, 2, 1, 100);
 //cf. LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_acc, require_XX_acc,
 //    require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc) {
 
