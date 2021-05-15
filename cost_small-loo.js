@@ -10,7 +10,7 @@ var b_max;
 var b_min;
 var delta;
 var epsilon = 0.5;
-exec(5, 100, 20, 10000);
+exec(5, 100, 20, 10);
 
 async function exec(k, n, n_test, n_clients) {
     //calculate b and RSS
@@ -28,40 +28,10 @@ async function exec(k, n, n_test, n_clients) {
     //calculate b_noisy
     let b_noisy = [];
     for (let l = 0; l < n_clients; l++) {
-        b_noisy[l] = await calc_DP_noise(b[l]);
+        b_noisy[l] = await calc_b_noisy(b[l]);
     }
 
-    //calculate true b mean
-    let b_mean = [];
-    let b_mean_sum = [];
-    for (let j = 0; j < b[0].length; j++) {
-        b_mean_sum[j] = 0;
-    }
-    for (let l = 0; l < n_clients; l++) {
-        for (let j = 0; j < b[l].length; j++) {
-            b_mean_sum[j] += b[l][j][0];
-        }
-    }
-    for (let j = 0; j < b[0].length; j++) {
-        b_mean[j] = b_mean_sum[j] / n_clients;
-    }
-    console.log(b_mean);
 
-    //calculate noisy b mean
-    let b_noisy_mean = [];
-    let b_noisy_mean_sum = [];
-    for (let j = 0; j < b_noisy[0].length; j++) {
-        b_noisy_mean_sum[j] = 0;
-    }
-    for (let l = 0; l < n_clients; l++) {
-        for (let j = 0; j < b_noisy[l].length; j++) {
-            b_noisy_mean_sum[j] += b_noisy[l][j];
-        }
-    }
-    for (let j = 0; j < b_noisy[0].length; j++) {
-        b_noisy_mean[j] = b_noisy_mean_sum[j] / n_clients;
-    }
-    console.log(b_noisy_mean);
 }
 
 
@@ -103,7 +73,7 @@ async function get_DP_delta(b, l) {
     delta = b_max - b_min;
 }
 
-async function calc_DP_noise(b) {
+async function calc_b_noisy(b) {
     let lambda = delta / epsilon;
     let b_noisy = [];
     for (let j = 0; j < b.length; j++) {
@@ -128,6 +98,40 @@ async function calc_DP_noise(b) {
         b_noisy[j] = b[j][0] + Lap;
     }
     return b_noisy;
+}
+
+async function print_difference_DP(b, b_noisy, n_clients) {
+    //calculate true b mean
+    let b_mean = [];
+    let b_mean_sum = [];
+    for (let j = 0; j < b[0].length; j++) {
+        b_mean_sum[j] = 0;
+    }
+    for (let l = 0; l < n_clients; l++) {
+        for (let j = 0; j < b[l].length; j++) {
+            b_mean_sum[j] += b[l][j][0];
+        }
+    }
+    for (let j = 0; j < b[0].length; j++) {
+        b_mean[j] = b_mean_sum[j] / n_clients;
+    }
+    console.log(b_mean);
+
+    //calculate noisy b mean
+    let b_noisy_mean = [];
+    let b_noisy_mean_sum = [];
+    for (let j = 0; j < b_noisy[0].length; j++) {
+        b_noisy_mean_sum[j] = 0;
+    }
+    for (let l = 0; l < n_clients; l++) {
+        for (let j = 0; j < b_noisy[l].length; j++) {
+            b_noisy_mean_sum[j] += b_noisy[l][j];
+        }
+    }
+    for (let j = 0; j < b_noisy[0].length; j++) {
+        b_noisy_mean[j] = b_noisy_mean_sum[j] / n_clients;
+    }
+    console.log(b_noisy_mean);
 }
 
 

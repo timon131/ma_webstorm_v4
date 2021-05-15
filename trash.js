@@ -1,14 +1,21 @@
-const mimcsponge = require("./circomlib/src/mimcsponge.js");
-//const mimc7 =  require("./circomlib/src/mimc7.js");
-const poseidon =  require("./circomlib/src/poseidon.js");
+function get_client_ID() {
+    return 1;
+}
+
+
+class class_client {
+    constructor(data_test) {
+        this.client_ID = get_client_ID();
+        this.data_test = data_test;
+    }
 
 
 
-let x = [
-    BigInt("14408838593220040598588012778523101864903887657864399481915450526643617223637"),
-    BigInt("14408838593220040598588012778523101864903887657864399481915450526643617223637")
-];
+}
 
-console.log(mimcsponge.multiHash(x,0,1));
+const client = [];
+for (let i = 0; i < 5; i++) {
+    client[i] = new class_client(10);
+}
 
-console.log(poseidon(x));
+console.log(client[2].client_ID)
