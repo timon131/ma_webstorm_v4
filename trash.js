@@ -1,21 +1,13 @@
-function get_client_ID() {
-    return 1;
+const normalize = require('array-normalize');
+const matrixmath = require ("mathjs");
+
+let x = [12, 23, 31, 49, 56];
+
+let mean = matrixmath.mean(x);
+let std = matrixmath.std(x, 'uncorrected');
+let x_stand = [];
+for (let l = 0; l < x.length; l++) {
+    x_stand[l] = (x[l] - mean) / std;
 }
 
-
-class class_client {
-    constructor(data_test) {
-        this.client_ID = get_client_ID();
-        this.data_test = data_test;
-    }
-
-
-
-}
-
-const client = [];
-for (let i = 0; i < 5; i++) {
-    client[i] = new class_client(10);
-}
-
-console.log(client[2].client_ID)
+console.log(x_stand);

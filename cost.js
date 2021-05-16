@@ -45,18 +45,20 @@ class class_client {
         let tmp_RSS = matrixmath.subtract(data_test[1], MatrixTranspose(y_est));
         // tmp_RSS: nx1
         let RSS = matrixmath.multiply( MatrixTranspose(tmp_RSS), tmp_RSS );
-        console.log(RSS[0][0])
-
         this.cost = RSS[0][0];
+
+        console.log(this.cost);
+
+        return this.cost;
     }
 
 }
 
 //////////////////////////////////
 
-exec(5, 100, 20, 10, 0.5);
+exec(8, 10000, 1000, 10, 0.5, 100);
 
-async function exec(k, n, n_test, n_client, epsilon) {
+async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
 
     const csvFilePath = '/home/timmel/Documents/202105_MA/housing.csv';
 
@@ -75,15 +77,57 @@ async function exec(k, n, n_test, n_client, epsilon) {
         await client[l].calc_b_noisy(lambda);
     }
 
-    //calculate cost on public data set
+    //calculate cost 1 | public, central test data set
     let data_test_central = await data_prep.prepare_housing_shuffle(csvFilePath, k, n_test);
+    let all_cost_central = [];
     for (let l = 0; l < n_client; l++) {
-        await client[l].calc_lr_cost(client[l].b, data_test_central);
+        all_cost_central[l] = await client[l].calc_lr_cost(client[l].b, data_test_central);
     }
+
+    //calculate cost 2 | private test data set
+    let data_test_private = [];
+    let all_cost_private = [];
+    for (let l = 0; l < n_client; l++) {
+        data_test_private[l] = await data_prep.prepare_housing_shuffle(csvFilePath, k, n_test);
+        all_cost_private[l] = await client[l].calc_lr_cost(client[l].b, data_test_private[l]);
+    }
+
+    //calculate cost 3 | LOO_small
+
+
+    //calculate cost 4 | LOO_large
+
+    //calculate incentives
+    let incentives_central = await calc_incentives(all_cost_central, total_incentive);
+    let incentives_private = await calc_incentives(all_cost_private, total_incentive);
+
+    //calculate incentive_delta's
+    let cost_delta_private = await calc_delta(incentives_central, incentives_private);
+
 
 }
 
 //////////////////////////////////
+
+function MatrixTranspose(a) {
+    var a_rows = a.length;
+    var a_cols = a[0].length;
+
+    //initialize transposed matrix a_trans
+    var a_trans = [];
+    for (var j = 0; j < a_cols; j++) {
+        a_trans[j] = [];
+    }
+
+    //transpose matrix
+    for (var j = 0; j < a_rows; j++) {
+        for (var i = 0; i < a_cols; i++) {
+            a_trans[i][j] = a[j][i];
+        }
+    }
+
+    return a_trans;
+}
 
 async function calc_lr_params(x, y) {
     let xx_inv = matrixmath.inv( matrixmath.multiply(x, MatrixTranspose(x)) );
@@ -118,22 +162,39 @@ async function get_DP_delta(all_b, n_client) {
     return delta;
 }
 
-function MatrixTranspose(a) {
-    var a_rows = a.length;
-    var a_cols = a[0].length;
+async function calc_delta(target, actual) {
+    let delta = matrixmath.subtract(actual, target);
+    console.log(delta);
 
-    //initialize transposed matrix a_trans
-    var a_trans = [];
-    for (var j = 0; j < a_cols; j++) {
-        a_trans[j] = [];
+    return delta;
+}
+
+async function calc_incentives(all_cost, total_incentive) {
+    //standardize all_cost and make change sign
+    let mean = matrixmath.mean(all_cost);
+    let std = matrixmath.std(all_cost, 'uncorrected');
+    let all_cost_stand = [];
+    for (let l = 0; l < all_cost.length; l++) {
+        all_cost_stand[l] = -(all_cost[l] - mean) / std;
     }
 
-    //transpose matrix
-    for (var j = 0; j < a_rows; j++) {
-        for (var i = 0; i < a_cols; i++) {
-            a_trans[i][j] = a[j][i];
-        }
+    //set negative entries = 0
+    let incentives = [];
+    for (let l = 0; l < all_cost.length; l++) {
+        if (all_cost_stand[l] < 0) { incentives[l] = 0; }
+        else { incentives[l] = all_cost_stand[l] }
     }
 
-    return a_trans;
+    //scale to range [0, 1]
+    let sum = matrixmath.sum(incentives);
+    for (let l = 0; l < all_cost.length; l++) {
+        incentives[l] = incentives[l] / sum;
+    }
+
+    //multiply with total_incentive
+    for (let l = 0; l < all_cost.length; l++) {
+        incentives[l] *= total_incentive;
+    }
+
+    return incentives;
 }
