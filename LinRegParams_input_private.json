@@ -42,10 +42,10 @@
   "in_hash_BC": "17758051187679994451203721828730993341951654331694709087352450464095838859238",
   "in_b_noisy_true_pos": [ ["20203"],["124730000020203"],["639179998167419"],["167329999489174"],["149570001609438"] ],
   "in_b_noisy_true_sign": [ [0],[1],[1],[1],[0] ],
-  "in_require_meanxn_acc": "3",
-  "in_require_varxn_acc": "3",
+  "in_require_meanxn_acc": "2",
+  "in_require_varxn_acc": "2",
   "in_require_XX_acc": "2",
   "in_require_XX_inv_maxnorm": "100000",
   "in_require_X_trans_Y_maxnorm": "50000000000000",
-  "in_require_b_noisy_acc": "3"
+  "in_require_b_noisy_acc": "2"
 }

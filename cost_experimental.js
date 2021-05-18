@@ -84,7 +84,7 @@ class class_client {
 
 //////////////////////////////////
 
-exec(5, 1000, 100, 10, 1, 100);
+exec(5, 1000, 100, 100, 1, 100);
 
 async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
 
@@ -106,14 +106,14 @@ async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
         all_b_noisy[l] = await client[l].calc_b_noisy(lambda);
     }
 
-    //calculate cost 1 | public, central test data set
+    //calculate cost benchmark | public, central test data set
     let data_test_central = await data_prep.prepare_housing_shuffle(csvFilePath, k, n_test);
     let all_cost_central = [];
     for (let l = 0; l < n_client; l++) {
         all_cost_central[l] = await client[l].calc_lr_cost(client[l].b, data_test_central);
     }
 
-    //calculate cost 2 | private test data set
+    //calculate cost 1 | private test data set
     let data_test_private = [];
     let all_cost_private = [];
     for (let l = 0; l < n_client; l++) {
@@ -121,24 +121,34 @@ async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
         all_cost_private[l] = await client[l].calc_lr_cost(client[l].b, data_test_private[l]);
     }
 
-    //calculate cost 3 | LOO_small
-    let all_cost_loos = [];
+    //calculate cost 2.1 | LOO_small_data_train
+    let all_cost_loos_data_train = [];
     let all_loos_b_noisy = [];
     for (let l = 0; l < n_client; l++) {
         all_loos_b_noisy[l] = await calc_lr_cost_loo(all_b_noisy, l);
-        all_cost_loos[l] = await client[l].calc_lr_cost(all_loos_b_noisy[l], client[l].data_train);
+        all_cost_loos_data_train[l] = await client[l].calc_lr_cost(all_loos_b_noisy[l], client[l].data_train);
     }
 
-    //calculate cost 4 | LOO_large
+    //calculate cost 2.2 | LOO_small_data_test
+    let all_cost_loos_data_test = [];
+    let delta_cost_loos_data_test = [];
+    for (let l = 0; l < n_client; l++) {
+        all_cost_loos_data_test[l] = await client[l].calc_lr_cost(all_loos_b_noisy[l], data_test_private[l]);
+        delta_cost_loos_data_test[l] = matrixmath.subtract(all_cost_private[l], all_cost_loos_data_test[l]);
+    }
+
+    //calculate cost 3.1 | LOO_large
 
     //calculate incentives
     let incentives_central = await calc_incentives(all_cost_central, total_incentive);
     let incentives_private = await calc_incentives(all_cost_private, total_incentive);
-    let incentives_loos = await calc_incentives(all_cost_loos, total_incentive);
+    let incentives_loos_data_train = await calc_incentives(all_cost_loos_data_train, total_incentive);
+    let incentives_loos_data_test = await calc_incentives(delta_cost_loos_data_test, total_incentive);
 
     //calculate incentive_delta's
     let cost_delta_private = await calc_delta(incentives_central, incentives_private, 'private - central');
-    let cost_delta_loos = await calc_delta(incentives_central, incentives_loos, 'loos - central');
+    let cost_delta_loos_data_train = await calc_delta(incentives_central, incentives_loos_data_train, 'loos_data_train - central');
+    let cost_delta_loos_data_test = await calc_delta(incentives_central, incentives_loos_data_test, 'loos_data_test - central');
 
 
 }
@@ -202,8 +212,16 @@ async function get_DP_delta(all_b, n_client) {
 
 async function calc_delta(target, actual, incentive_type) {
     let delta = matrixmath.subtract(actual, target);
-    console.log(incentive_type + ':');
-    console.log(delta);
+    console.log('\n' + incentive_type + ':');
+    //console.log(delta);
+
+    let mean = matrixmath.mean(delta);
+    console.log('mean:');
+    console.log(mean);
+
+    let variance = matrixmath.variance(delta, 'uncorrected');
+    console.log('variance:');
+    console.log(variance);
 
     return delta;
 }

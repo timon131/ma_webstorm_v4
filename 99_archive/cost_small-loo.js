@@ -1,4 +1,4 @@
-const data_prep = require ("./data_prep.js");
+const data_prep = require ("../data_prep.js");
 const matrixmath = require ("mathjs");
 
 ////////////////////////////////////////////////
