@@ -84,7 +84,7 @@ class class_client {
 
 //////////////////////////////////
 
-exec(5, 1000, 100, 100, 1, 100);
+exec(5, 1000, 100, 10, 1, 100);
 
 async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
 
@@ -106,11 +106,15 @@ async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
         all_b_noisy[l] = await client[l].calc_b_noisy(lambda);
     }
 
-    //calculate cost benchmark | public, central test data set
-    let data_test_central = await data_prep.prepare_housing_shuffle(csvFilePath, k, n_test);
-    let all_cost_central = [];
+    //calculate cost benchmark
+    let all_cost_benchmark = [];
     for (let l = 0; l < n_client; l++) {
-        all_cost_central[l] = await client[l].calc_lr_cost(client[l].b, data_test_central);
+        all_cost_benchmark[l] = [];
+        for (let l_current = 0; l_current < n_client; l_current++) {
+            if (l != l_current) {
+                all_cost_benchmark[l][l_current] = await calc_lr_cost(client[l_current].b, client[l].data_train);
+            }
+        }
     }
 
     //calculate cost 1 | private test data set
@@ -137,18 +141,18 @@ async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
         delta_cost_loos_data_test[l] = matrixmath.subtract(all_cost_private[l], all_cost_loos_data_test[l]);
     }
 
-    //calculate cost 3.1 | LOO_large
+    //calculate cost 3 | LOO_large
 
     //calculate incentives
-    let incentives_central = await calc_incentives(all_cost_central, total_incentive);
-    let incentives_private = await calc_incentives(all_cost_private, total_incentive);
-    let incentives_loos_data_train = await calc_incentives(all_cost_loos_data_train, total_incentive);
-    let incentives_loos_data_test = await calc_incentives(delta_cost_loos_data_test, total_incentive);
+    //let incentives_central = await calc_incentives(all_cost_benchmark, total_incentive);
+    //let incentives_private = await calc_incentives(all_cost_private, total_incentive);
+    //let incentives_loos_data_train = await calc_incentives(all_cost_loos_data_train, total_incentive);
+    //let incentives_loos_data_test = await calc_incentives(delta_cost_loos_data_test, total_incentive);
 
     //calculate incentive_delta's
-    let cost_delta_private = await calc_delta(incentives_central, incentives_private, 'private - central');
-    let cost_delta_loos_data_train = await calc_delta(incentives_central, incentives_loos_data_train, 'loos_data_train - central');
-    let cost_delta_loos_data_test = await calc_delta(incentives_central, incentives_loos_data_test, 'loos_data_test - central');
+    //let cost_delta_private = await calc_delta(incentives_central, incentives_private, 'private - central');
+    //let cost_delta_loos_data_train = await calc_delta(incentives_central, incentives_loos_data_train, 'loos_data_train - central');
+    //let cost_delta_loos_data_test = await calc_delta(incentives_central, incentives_loos_data_test, 'loos_data_test - central');
 
 
 }
@@ -179,6 +183,43 @@ async function calc_lr_params(x, y) {
     let xx_inv = matrixmath.inv( matrixmath.multiply(x, MatrixTranspose(x)) );
     let b = matrixmath.multiply( matrixmath.multiply(xx_inv, x), y );
     return b;
+}
+
+async function calc_lr_cost(b, data_test_raw, n_test) {
+    //modify data_test if data_test_raw's n > n_test
+    let data_test = [];
+    data_test[0] = [];
+    data_test[1] = [];
+    if (data_test_raw[1].length > n_test) {
+        //cut X to n == n_test
+        let i_x;
+        for (let j = 0; j < data_test_raw[0].length; j++) {
+            data_test[0][j] = [];
+            i_x = 0;
+            while (i_x < n_test) {
+                data_test[0][j][i_x] = data_test_raw[0][j][i_x];
+            }
+        }
+        //cut Y to n == n_test
+        let i_y = 0;
+        while (i_y < n_test) {
+            data_test[1][i_y] = [];
+            data_test[1][i_y][0] = data_test_raw[1][i_y][0];
+        }
+    } else {
+        data_test = data_test_raw;
+    }
+    // y_est: 1xn | b: kx1 | x_test = data_test[0]: kxn
+    let y_est = matrixmath.multiply(MatrixTranspose(b), data_test[0]);
+    // y_est: 1xn | data_test[1] = y_test: nx1
+    let tmp_RSS = matrixmath.subtract(data_test[1], MatrixTranspose(y_est));
+    // tmp_RSS: nx1
+    let RSS = matrixmath.multiply(MatrixTranspose(tmp_RSS), tmp_RSS);
+    //RSS: 1x1
+
+    //console.log(RSS[0][0]);
+
+    return RSS[0][0];
 }
 
 async function get_DP_delta(all_b, n_client) {
