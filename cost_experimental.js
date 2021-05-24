@@ -57,6 +57,7 @@ class class_client {
                 i_x = 0;
                 while (i_x < n_test) {
                     data_test[0][j][i_x] = data_test_raw[0][j][i_x];
+                    i_x++;
                 }
             }
             //cut Y to n == n_test
@@ -64,6 +65,7 @@ class class_client {
             while (i_y < n_test) {
                 data_test[1][i_y] = [];
                 data_test[1][i_y][0] = data_test_raw[1][i_y][0];
+                i_y++;
             }
         } else {
             data_test = data_test_raw;
@@ -84,7 +86,7 @@ class class_client {
 
 //////////////////////////////////
 
-exec(5, 1000, 100, 10, 1, 100);
+//exec(5, 1000, 100, 100, 1, 100);
 
 async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
 
@@ -106,16 +108,23 @@ async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
         all_b_noisy[l] = await client[l].calc_b_noisy(lambda);
     }
 
-    //calculate cost benchmark
+    //calculate cost benchmark | Mugunthan paper
     let all_cost_benchmark = [];
+        //compute other clients' cost
     for (let l = 0; l < n_client; l++) {
         all_cost_benchmark[l] = [];
         for (let l_current = 0; l_current < n_client; l_current++) {
-            if (l != l_current) {
+            if (l !== l_current) {
                 all_cost_benchmark[l][l_current] = await calc_lr_cost(client[l_current].b, client[l].data_train);
             }
         }
     }
+        //compute medians and standardize them
+    let all_cost_median_benchmark = [];
+    for (let l = 0; l < n_client; l++) {
+        all_cost_median_benchmark[l] = matrixmath.median(all_cost_benchmark[l])
+    }
+    let all_cost_median_standardized_benchmark = await standardize(all_cost_median_benchmark);
 
     //calculate cost 1 | private test data set
     let data_test_private = [];
@@ -124,14 +133,16 @@ async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
         data_test_private[l] = await data_prep.prepare_housing_shuffle(csvFilePath, k, n_test);
         all_cost_private[l] = await client[l].calc_lr_cost(client[l].b, data_test_private[l]);
     }
+    let all_cost_standardized_private = await standardize(all_cost_private);
 
     //calculate cost 2.1 | LOO_small_data_train
     let all_cost_loos_data_train = [];
     let all_loos_b_noisy = [];
     for (let l = 0; l < n_client; l++) {
-        all_loos_b_noisy[l] = await calc_lr_cost_loo(all_b_noisy, l);
+        all_loos_b_noisy[l] = await calc_lr_b_noisy_loo(all_b_noisy, l);
         all_cost_loos_data_train[l] = await client[l].calc_lr_cost(all_loos_b_noisy[l], client[l].data_train);
     }
+    let all_cost_standardized_loos_data_train = await standardize(all_cost_loos_data_train);
 
     //calculate cost 2.2 | LOO_small_data_test
     let all_cost_loos_data_test = [];
@@ -140,8 +151,39 @@ async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
         all_cost_loos_data_test[l] = await client[l].calc_lr_cost(all_loos_b_noisy[l], data_test_private[l]);
         delta_cost_loos_data_test[l] = matrixmath.subtract(all_cost_private[l], all_cost_loos_data_test[l]);
     }
+    let all_cost_standardized_loos_data_test = await standardize(delta_cost_loos_data_test);
 
     //calculate cost 3 | LOO_large
+    let all_lool_b_noisy = [];
+    let all_cost_lool = [];
+    let counter;
+        //compute other clients' cost
+    for (let l = 0; l < n_client; l++) {
+        all_lool_b_noisy[l] = [];
+        all_cost_lool[l] = [];
+        counter = 0;
+        for (let l_current = 0; l_current < n_client; l_current++) {
+            if (l !== l_current) {
+                all_lool_b_noisy[l][counter] = await calc_lr_b_noisy_loo(all_b_noisy, l_current);
+                all_cost_lool[l][counter] = await calc_lr_cost(all_lool_b_noisy[l][counter], client[l].data_train, n_test);
+                counter++;
+            }
+        }
+    }
+        //compute median cost for every client
+    let all_cost_median_lool = [];
+    let all_cost_median_standardized_lool;
+    for (let l = 0; l < n_client; l++) {
+        all_cost_median_lool[l] = matrixmath.median(all_cost_lool[l]);
+    }
+    all_cost_median_standardized_lool = await standardize(all_cost_median_lool);
+
+
+        //calculate Euclidean distances to benchmark
+    let EuDist_private = await EuclidDistance(all_cost_median_standardized_benchmark, all_cost_standardized_private, 'benchmark-private');
+    let EuDist_loos_train = await EuclidDistance(all_cost_median_standardized_benchmark, all_cost_standardized_loos_data_train, 'benchmark-LOOsmall_train');
+    let EuDist_loos_test = await EuclidDistance(all_cost_median_standardized_benchmark, all_cost_standardized_loos_data_test, 'benchmark-LOOsmall_test');
+    let EuDist_lool = await EuclidDistance(all_cost_median_standardized_benchmark, all_cost_median_standardized_lool, 'benchmark-LOOlarge');
 
     //calculate incentives
     //let incentives_central = await calc_incentives(all_cost_benchmark, total_incentive);
@@ -149,12 +191,7 @@ async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
     //let incentives_loos_data_train = await calc_incentives(all_cost_loos_data_train, total_incentive);
     //let incentives_loos_data_test = await calc_incentives(delta_cost_loos_data_test, total_incentive);
 
-    //calculate incentive_delta's
-    //let cost_delta_private = await calc_delta(incentives_central, incentives_private, 'private - central');
-    //let cost_delta_loos_data_train = await calc_delta(incentives_central, incentives_loos_data_train, 'loos_data_train - central');
-    //let cost_delta_loos_data_test = await calc_delta(incentives_central, incentives_loos_data_test, 'loos_data_test - central');
-
-
+    return [EuDist_private, EuDist_loos_train, EuDist_loos_test, EuDist_lool]
 }
 
 //////////////////////////////////
@@ -178,6 +215,23 @@ function MatrixTranspose(a) {
 
     return a_trans;
 }
+async function standardize(input_matrix) {
+    let mean = matrixmath.mean(input_matrix);
+    let std = matrixmath.std(input_matrix);
+    let output = [];
+    for (let i = 0; i < input_matrix.length; i++) {
+        output[i] = (input_matrix[i] - mean) / std;
+    }
+    return output;
+}
+async function EuclidDistance(input_matrix_a, input_matrix_b, type) {
+    let EuDist = matrixmath.sqrt(matrixmath.sum(matrixmath.square(matrixmath.subtract(input_matrix_a, input_matrix_b))));
+
+    //console.log(type + ':');
+    //console.log(EuDist);
+
+    return EuDist;
+}
 
 async function calc_lr_params(x, y) {
     let xx_inv = matrixmath.inv( matrixmath.multiply(x, MatrixTranspose(x)) );
@@ -198,6 +252,7 @@ async function calc_lr_cost(b, data_test_raw, n_test) {
             i_x = 0;
             while (i_x < n_test) {
                 data_test[0][j][i_x] = data_test_raw[0][j][i_x];
+                i_x++;
             }
         }
         //cut Y to n == n_test
@@ -205,6 +260,7 @@ async function calc_lr_cost(b, data_test_raw, n_test) {
         while (i_y < n_test) {
             data_test[1][i_y] = [];
             data_test[1][i_y][0] = data_test_raw[1][i_y][0];
+            i_y++;
         }
     } else {
         data_test = data_test_raw;
@@ -297,7 +353,8 @@ async function calc_incentives(all_cost, total_incentive) {
     return incentives;
 }
 
-async function calc_lr_cost_loo(all_b_noisy, client_l) {
+async function calc_lr_b_noisy_loo(all_b_noisy, client_l) {
+    //calculates LOO weight for client l
 
     //console.log(all_b_noisy)
 
@@ -315,3 +372,9 @@ async function calc_lr_cost_loo(all_b_noisy, client_l) {
 
     return loo_b_noisy;
 }
+
+//////////////////////////////////
+
+module.exports = {
+    exec
+};
