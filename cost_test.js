@@ -1,5 +1,6 @@
 const cost_calc = require('./cost_experimental');
 const matrixmath = require ("mathjs");
+const nplot = require('nodeplotlib');
 
 exec(100)
 
@@ -42,4 +43,28 @@ async function exec(n_test) {
     console.log('benchmark-LOOlarge:');
     console.log('mean: ' + mean_benchmark_LOOlarge);
     console.log('var: ' + var_benchmark_LOOlarge);
+
+    //plot results
+    let data = [
+        {y: score[0], type: 'line', name: 'benchmark <> private'},
+        {y: score[1], type: 'line', name: 'benchmark <> LOOsmall_train'},
+        {y: score[2], type: 'line', name: 'benchmark <> LOOsmall_test'},
+        {y: score[3], type: 'line', name: 'benchmark <> LOOlarge'},
+    ];
+
+    let layout = {
+        title: 'Overview of cost approaches',
+        xaxis: {
+            title: 'client',
+            showgrid: false,
+            zeroline: false,
+            nticks: 10
+        },
+        yaxis: {
+            title: 'euclidean distance',
+            showline: false
+        }
+    };
+
+    nplot.plot(data, layout)
 }

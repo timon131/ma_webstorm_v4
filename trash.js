@@ -1,15 +1,43 @@
-const normalize = require('array-normalize');
 const matrixmath = require ("mathjs");
+const nplot = require('nodeplotlib');
 
+/*
 let n = 5;
 let n_test = 2;
 let client_l = 2;
 let n_clients = 3;
 
-let x = [12, 23, 31, 49, 56];
-let y = [13, 22, 32, 50, 54];
+let a = {
+    x: [12, 23, 31, 49, 56],
+    y: [1, 2, 1, 5, 2],
+    type: 'scatter'
+};
+let b = {
+    x: [13, 22, 32, 50, 54],
+    y: [4, 3, 2, 1, 3],
+    type: 'scatter'
+};
 
-let eucl_dist = matrixmath.sqrt( matrixmath.sum( matrixmath.square( matrixmath.subtract(x, y) ) ) );
+let data = [a, b];
 
-console.log(diff)
+plotly.newPlot('myDiv', data);
+*/
+let x1 = [3, 12, 1, 4];
+let x2 = [3, 11, 1, 4];
+let data = [{y: x1, type: 'line'}, {y: x2, type: 'line', name: '2'}];
 
+let layout = {
+    title: 'Test',
+    xaxis: {
+        title: 'client',
+        showgrid: false,
+        zeroline: false,
+        nticks: 2
+    },
+    yaxis: {
+        title: 'Euler distance',
+        showline: false
+    }
+};
+
+nplot.plot(data, layout)
