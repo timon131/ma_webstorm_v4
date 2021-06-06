@@ -21,7 +21,7 @@ async function generate_ZKPinputs(l) {
     // define number of features k and sample size n
     let k = 4;
     k++;    //account for X: k+1 x n
-    const n = 500;
+    const n = 20;
     //const n_test = Math.round(n / 2);
     const n_test = 10;
 
@@ -46,10 +46,12 @@ async function generate_ZKPinputs(l) {
     const require_b_noisy_acc = 3;
 
     //print sizes of input_public.json
+    /*
     console.log("size of beta_input_public.json:");
     console.log(1 + 1 + 1 + 1 + DP_acc - 1 + 1 + 1 + k + k + 1 + 1 + 1 + 1);
     console.log("size of cost_input_public.json:");
     console.log(8);
+    */
 
 
     //

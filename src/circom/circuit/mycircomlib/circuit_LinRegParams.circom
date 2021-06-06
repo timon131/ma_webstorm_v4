@@ -38,6 +38,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
     signal input in_require_X_trans_Y_maxnorm;
     signal input in_require_b_noisy_acc;
 
+
     //
     // 0. step | Prerequisites: make sure that input variables are correct
     //
@@ -277,7 +278,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
     1 === range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(5, 500, 5, 10, 3, 3, 2,
+component main = LinRegProof(5, 20, 5, 6, 3, 3, 2,
     100000, 50000000000000, 3, 1, 100);
 //cf. LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_acc, require_XX_acc,
 //    require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc) {
@@ -285,5 +286,5 @@ component main = LinRegProof(5, 500, 5, 10, 3, 3, 2,
 // time /bin/bash /home/timmel/WebstormProjects/ma_webstorm_v4/src/circom/circuit/snark_generate-zkey.sh
 // time /bin/bash /home/timmel/WebstormProjects/ma_webstorm_v4/src/circom/circuit/snark_prove-validate.sh
 
-// time /bin/bash /home/timmel/WebstormProjects/ma_webstorm_v4/src/circom/circuit/c-compiler/snark_prove-validate_cpp.sh
 // time /bin/bash /home/timmel/WebstormProjects/ma_webstorm_v4/src/circom/circuit/c-compiler/snark_generate-zkey_cpp.sh
+// time /bin/bash /home/timmel/WebstormProjects/ma_webstorm_v4/src/circom/circuit/c-compiler/snark_prove-validate_cpp.sh
