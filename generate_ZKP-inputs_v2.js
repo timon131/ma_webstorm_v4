@@ -21,7 +21,7 @@ async function generate_ZKPinputs(l) {
     // define number of features k and sample size n
     let k = 4;
     k++;    //account for X: k+1 x n
-    const n = 600;
+    const n = 700;
     //const n_test = Math.round(n / 2);
     const n_test = 10;
 
