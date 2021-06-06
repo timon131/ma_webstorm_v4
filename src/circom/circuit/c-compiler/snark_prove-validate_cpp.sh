@@ -11,3 +11,8 @@ npx snarkit check ../../circuit --backend native --witness_type bin
 
 #verify the proof
 snarkjs groth16 verify ../verification_key.json ./data/output.json ../proof.json
+
+#print sizes
+ls -lh ../circuit_final.zkey
+ls -lh ../verification_key.json
+ls -lh ../proof.json
