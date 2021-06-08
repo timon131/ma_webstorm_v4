@@ -40,7 +40,7 @@ async function generate_ZKPinputs(l) {
     //set accuracies for range proofs
     const require_meanxn_acc = 3;
     const require_varxn_acc = 3;
-    const require_XX_acc = 2;
+    const require_XX_acc = 1;
     const require_XX_inv_maxnorm = 10 ** (dec);
     const require_X_trans_Y_maxnorm = k * 10 ** ((2*dec) + 3);
     const require_b_noisy_acc = 2;
