@@ -3,7 +3,7 @@ const build_merkle_six = require ("./build_merkle_six.js");
 const params = require ("./params.js");
 const data_prep = require ("./data_prep.js");
 const DP_noise = require ("./DP_noise.js");
-const cost = require ("./calc_cost.js");
+const cost = require ("./99_archive/calc_cost.js");
 const fs = require ("fs");
 
 ////////////////////////////////

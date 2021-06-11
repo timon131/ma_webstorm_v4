@@ -17,6 +17,7 @@
     "fs": "0.0.1-security",
     "hub.js": "^0.3.19",
     "mathjs": "^9.2.0",
+    "node-correlation": "^1.0.2",
     "nodeplotlib": "^0.7.3",
     "shelljs": "^0.8.4",
     "snarkit": "0.0.5",

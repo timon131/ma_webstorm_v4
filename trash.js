@@ -1,5 +1,6 @@
 const matrixmath = require ("mathjs");
 const nplot = require('nodeplotlib');
+const corr = require('node-correlation');
 
 /*
 let n = 5;
@@ -24,7 +25,12 @@ plotly.newPlot('myDiv', data);
 */
 let x1 = [3, 12, 1, 4];
 let x2 = [3, 11, 1, 4];
+
+console.log(corr.calc(x1, x2))
+
+/*
 let data = [{y: x1, type: 'line'}, {y: x2, type: 'line', name: '2'}];
+let data2 = [{y: x1, type: 'line'}, {y: x2, type: 'line', name: '2'}];
 
 let layout = {
     title: 'Test',
@@ -40,4 +46,7 @@ let layout = {
     }
 };
 
-nplot.plot(data, layout)
+nplot.stack(data, layout);
+nplot.stack(data2, layout)
+nplot.plot()
+*/

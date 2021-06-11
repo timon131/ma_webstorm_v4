@@ -1,5 +1,6 @@
 const data_prep = require ("./data_prep.js");
 const matrixmath = require ("mathjs");
+const corr = require('node-correlation');
 
 //////////////////////////////////
 
@@ -86,7 +87,7 @@ class class_client {
 
 //////////////////////////////////
 
-//exec(5, 1000, 100, 100, 1, 100);
+exec(5, 1000, 100, 100, 1, 100);
 
 async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
 
@@ -177,13 +178,15 @@ async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
         all_cost_median_lool[l] = matrixmath.median(all_cost_lool[l]);
     }
     all_cost_median_standardized_lool = await standardize(all_cost_median_lool);
+        //change sign
+    let all_cost_median_standardized_lool_neg = matrixmath.multiply(-1, all_cost_median_standardized_lool);
 
 
-        //calculate Euclidean distances to benchmark
+    //calculate Euclidean distances to benchmark
     let EuDist_private = await EuclidDistance(all_cost_median_standardized_benchmark, all_cost_standardized_private, 'benchmark-private');
     let EuDist_loos_train = await EuclidDistance(all_cost_median_standardized_benchmark, all_cost_standardized_loos_data_train, 'benchmark-LOOsmall_train');
     let EuDist_loos_test = await EuclidDistance(all_cost_median_standardized_benchmark, all_cost_standardized_loos_data_test, 'benchmark-LOOsmall_test');
-    let EuDist_lool = await EuclidDistance(all_cost_median_standardized_benchmark, all_cost_median_standardized_lool, 'benchmark-LOOlarge');
+    let EuDist_lool = await EuclidDistance(all_cost_median_standardized_benchmark, all_cost_median_standardized_lool_neg, 'benchmark-LOOlarge');
 
     //calculate incentives
     //let incentives_central = await calc_incentives(all_cost_benchmark, total_incentive);
@@ -191,7 +194,28 @@ async function exec(k, n, n_test, n_client, epsilon, total_incentive) {
     //let incentives_loos_data_train = await calc_incentives(all_cost_loos_data_train, total_incentive);
     //let incentives_loos_data_test = await calc_incentives(delta_cost_loos_data_test, total_incentive);
 
-    return [EuDist_private, EuDist_loos_train, EuDist_loos_test, EuDist_lool]
+    //calculate correlation
+    let corr_benchmark_private = corr.calc(all_cost_median_standardized_benchmark, all_cost_standardized_private);
+    let corr_benchmark_LOOsmall_train = corr.calc(all_cost_median_standardized_benchmark, all_cost_standardized_loos_data_train);
+    let corr_benchmark_LOOsmall_test = corr.calc(all_cost_median_standardized_benchmark, all_cost_standardized_loos_data_test);
+    let corr_benchmark_LOOlarge = corr.calc(all_cost_median_standardized_benchmark, all_cost_median_standardized_lool_neg);
+
+    return [
+        [
+            all_cost_median_standardized_benchmark,
+            all_cost_standardized_private,
+            all_cost_standardized_loos_data_train,
+            all_cost_standardized_loos_data_test,
+            all_cost_median_standardized_lool_neg
+        ],
+        [EuDist_private, EuDist_loos_train, EuDist_loos_test, EuDist_lool],
+        [
+            corr_benchmark_private,
+            corr_benchmark_LOOsmall_train,
+            corr_benchmark_LOOsmall_test,
+            corr_benchmark_LOOlarge
+        ]
+    ]
 }
 
 //////////////////////////////////
