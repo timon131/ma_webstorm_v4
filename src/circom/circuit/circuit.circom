@@ -181,5 +181,5 @@ template LinRegCost(k, n, n_test, dec, merkle_level_train, merkle_level_test, ha
     in_cost_submitted === cost_sum.out;
 }
 
-component main = LinRegCost(5, 250, 25, 5, 9, 6, 1, 3);
+component main = LinRegCost(5, 500, 50, 5, 10, 7, 1, 3);
 //cf. LinRegCost(k, n, n_test, dec, merkle_level_train, merkle_level_test, hash_alg, require_b_acc)
