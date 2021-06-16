@@ -202,12 +202,12 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
     component X_trans_Y_mult = MatrixMult(n, k, 1);
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            X_trans_Y_mult.in_a[j][i] <== in_x_pos[j][i];
+            X_trans_Y_mult.in_a_pos[j][i] <== in_x_pos[j][i];
             X_trans_Y_mult.in_a_sign[j][i] <== in_x_sign[j][i];
         }
     }
     for (var i = 0; i < n; i++) {
-        X_trans_Y_mult.in_b[i][0] <== in_y_pos[i][0];
+        X_trans_Y_mult.in_b_pos[i][0] <== in_y_pos[i][0];
         X_trans_Y_mult.in_b_sign[i][0] <== in_y_sign[i][0];
     }
 
@@ -218,7 +218,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
     }
     component maxelement_X_trans_Y_pos = VectorNormMaxElement(k, bits_range_X_trans_Y_norm);
     for (var j = 0; j < k; j++) {
-        maxelement_X_trans_Y_pos.in[j] <== X_trans_Y_mult.out[j][0];
+        maxelement_X_trans_Y_pos.in[j] <== X_trans_Y_mult.out_pos[j][0];
     }
 
     //check range
@@ -278,8 +278,8 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
     1 === range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(5, 20, 5, 6, 3, 3, 2,
-    100000, 50000000000000, 3, 1, 100);
+component main = LinRegProof(5, 1000, 5, 11, 3, 3, 2,
+    100000, 50000000000000, 2, 1, 100);
 //cf. LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_acc, require_XX_acc,
 //    require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc) {
 

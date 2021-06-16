@@ -21,7 +21,7 @@ async function generate_ZKPinputs(l) {
     // define number of features k and sample size n
     let k = 4;
     k++;    //account for X: k+1 x n
-    const n = 1000;
+    const n = 20;
     //const n_test = Math.round(n / 2);
     const n_test = 10;
 
@@ -44,6 +44,7 @@ async function generate_ZKPinputs(l) {
     const require_XX_inv_maxnorm = 10 ** (dec);
     const require_X_trans_Y_maxnorm = k * 10 ** ((2*dec) + 3);
     const require_b_noisy_acc = 2;
+    const require_b_acc = 2;
 
     //print sizes of input_public.json
     /*
@@ -161,8 +162,8 @@ async function generate_ZKPinputs(l) {
 
 
     //build merkle trees
-    const xy_tree = build_merkle_six.build_merkletree(x_round_pos, x_round_sign, y_round_pos, y_round_sign, hash_alg);
-    console.log("level xy: ", xy_tree.level);
+    const train_tree = build_merkle_six.build_merkletree(x_round_pos, x_round_sign, y_round_pos, y_round_sign, hash_alg);
+    console.log("level train: ", train_tree.level);
 
     const test_tree = build_merkle_six.build_merkletree(x_test_round_pos, x_test_round_sign, y_test_round_pos, y_test_round_sign, hash_alg);
     console.log("level test: ", test_tree.level);
@@ -205,142 +206,142 @@ async function generate_ZKPinputs(l) {
     file_params.on('error', function (err) { /* error handling */});
     file_params.write("{\n");
 
-    //private inputs
-
-    //write X_ROUND_POS
-    file_params.write("  \"in_x_pos\":\n    [\n");
-    for (var j = 0; j < x_round_pos.length; j++) {
-        if (j != k - 1) {
-            file_params.write("      [" + x_round_pos[j] + "],\n");
-        } else {
-            file_params.write("      [" + x_round_pos[j] + "]\n");
+        //private inputs
+    
+        //write X_ROUND_POS
+        file_params.write("  \"in_x_pos\":\n    [\n");
+        for (var j = 0; j < x_round_pos.length; j++) {
+            if (j != k - 1) {
+                file_params.write("      [" + x_round_pos[j] + "],\n");
+            } else {
+                file_params.write("      [" + x_round_pos[j] + "]\n");
+            }
         }
-    }
-    file_params.write("    ],\n");
-    //write X_ROUND_SIGN
-    file_params.write("  \"in_x_sign\":\n    [\n");
-    for (var j = 0; j < x_round_sign.length; j++) {
-        if (j != k - 1) {
-            file_params.write("      [" + x_round_sign[j] + "],\n");
-        } else {
-            file_params.write("      [" + x_round_sign[j] + "]\n");
+        file_params.write("    ],\n");
+        //write X_ROUND_SIGN
+        file_params.write("  \"in_x_sign\":\n    [\n");
+        for (var j = 0; j < x_round_sign.length; j++) {
+            if (j != k - 1) {
+                file_params.write("      [" + x_round_sign[j] + "],\n");
+            } else {
+                file_params.write("      [" + x_round_sign[j] + "]\n");
+            }
         }
-    }
-    file_params.write("    ],\n");
-
-    //write y_ROUND_POS
-    file_params.write("  \"in_y_pos\": [ ");
-    for (var j = 0; j < y_round_pos.length; j++) {
-        if (j != y_round_pos.length - 1) {
-            file_params.write("[" + y_round_pos[j] + "],");
-        } else {
-            file_params.write("[" + y_round_pos[j] + "]");
+        file_params.write("    ],\n");
+    
+        //write y_ROUND_POS
+        file_params.write("  \"in_y_pos\": [ ");
+        for (var j = 0; j < y_round_pos.length; j++) {
+            if (j != y_round_pos.length - 1) {
+                file_params.write("[" + y_round_pos[j] + "],");
+            } else {
+                file_params.write("[" + y_round_pos[j] + "]");
+            }
         }
-    }
-    file_params.write("  ],\n");
-    //write y_ROUND_SIGN
-    file_params.write("  \"in_y_sign\": [ ");
-    for (var j = 0; j < y_round_sign.length; j++) {
-        if (j != y_round_sign.length - 1) {
-            file_params.write("[" + y_round_sign[j] + "],");
-        } else {
-            file_params.write("[" + y_round_sign[j] + "]");
+        file_params.write("  ],\n");
+        //write y_ROUND_SIGN
+        file_params.write("  \"in_y_sign\": [ ");
+        for (var j = 0; j < y_round_sign.length; j++) {
+            if (j != y_round_sign.length - 1) {
+                file_params.write("[" + y_round_sign[j] + "],");
+            } else {
+                file_params.write("[" + y_round_sign[j] + "]");
+            }
         }
-    }
-    file_params.write(" ],\n");
-
-    //write XX_INV_ROUND_POS
-    file_params.write("  \"in_xx_inv_pos\":\n    [\n");
-    for (var j = 0; j < xx_inv_round_pos.length; j++) {
-        if (j != k - 1) {
-            file_params.write("      [" + xx_inv_round_pos[j] + "],\n");
-        } else {
-            file_params.write("      [" + xx_inv_round_pos[j] + "]\n");
+        file_params.write(" ],\n");
+    
+        //write XX_INV_ROUND_POS
+        file_params.write("  \"in_xx_inv_pos\":\n    [\n");
+        for (var j = 0; j < xx_inv_round_pos.length; j++) {
+            if (j != k - 1) {
+                file_params.write("      [" + xx_inv_round_pos[j] + "],\n");
+            } else {
+                file_params.write("      [" + xx_inv_round_pos[j] + "]\n");
+            }
         }
-    }
-    file_params.write("    ],\n");
-    //write XX_INV_ROUND_SIGN
-    file_params.write("  \"in_xx_inv_sign\":\n    [\n");
-    for (var j = 0; j < xx_inv_round_sign.length; j++) {
-        if (j != k - 1) {
-            file_params.write("      [" + xx_inv_round_sign[j] + "],\n");
-        } else {
-            file_params.write("      [" + xx_inv_round_sign[j] + "]\n");
+        file_params.write("    ],\n");
+        //write XX_INV_ROUND_SIGN
+        file_params.write("  \"in_xx_inv_sign\":\n    [\n");
+        for (var j = 0; j < xx_inv_round_sign.length; j++) {
+            if (j != k - 1) {
+                file_params.write("      [" + xx_inv_round_sign[j] + "],\n");
+            } else {
+                file_params.write("      [" + xx_inv_round_sign[j] + "]\n");
+            }
         }
-    }
-    file_params.write("    ],\n");
-
-    //public inputs
-
-    //write k
-    file_params.write("  \"in_k\": \"" + k + "\",\n");
-
-    //write n
-    file_params.write("  \"in_n\": \"" + n + "\",\n");
-
-    //write dec
-    file_params.write("  \"in_dec\": \"" + dec + "\",\n");
-
-    //write merkle root
-    file_params.write("  \"in_xy_merkleroot\": \"" + xy_tree.root + "\",\n");
-
-    //write Lap_X_pos
-    file_params.write("  \"in_Lap_X_pos\": [");
-    for (let j = 0; j < Lap_X_pos.length; j++) {
-        if (j != Lap_X_pos.length - 1) {
-            file_params.write("\"" + Lap_X_pos[j] + "\",");
-        } else {
-            file_params.write("\"" + Lap_X_pos[j] + "\"],\n");
+        file_params.write("    ],\n");
+    
+        //public inputs
+    
+        //write k
+        file_params.write("  \"in_k\": \"" + k + "\",\n");
+    
+        //write n
+        file_params.write("  \"in_n\": \"" + n + "\",\n");
+    
+        //write dec
+        file_params.write("  \"in_dec\": \"" + dec + "\",\n");
+    
+        //write merkle root
+        file_params.write("  \"in_xy_merkleroot\": \"" + train_tree.root + "\",\n");
+    
+        //write Lap_X_pos
+        file_params.write("  \"in_Lap_X_pos\": [");
+        for (let j = 0; j < Lap_X_pos.length; j++) {
+            if (j != Lap_X_pos.length - 1) {
+                file_params.write("\"" + Lap_X_pos[j] + "\",");
+            } else {
+                file_params.write("\"" + Lap_X_pos[j] + "\"],\n");
+            }
         }
-    }
-
-    //write in_DP_sig_acc
-    file_params.write("  \"in_DP_acc\": \"" + DP_acc + "\",\n");
-
-    //write in_hash_BC
-    file_params.write("  \"in_hash_BC\": \"" + DP_hash_BC + "\",\n");
-
-    //write b_NOISY_POS
-    file_params.write("  \"in_b_noisy_true_pos\": [ ");
-    for (var j = 0; j < b_noisy_pos.length; j++) {
-        if (j != b_noisy_pos.length - 1) {
-            file_params.write("[\"" + BigInt(b_noisy_pos[j]) + "\"],");
-        } else {
-            file_params.write("[\"" + BigInt(b_noisy_pos[j]) + "\"]");
+    
+        //write in_DP_sig_acc
+        file_params.write("  \"in_DP_acc\": \"" + DP_acc + "\",\n");
+    
+        //write in_hash_BC
+        file_params.write("  \"in_hash_BC\": \"" + DP_hash_BC + "\",\n");
+    
+        //write b_NOISY_POS
+        file_params.write("  \"in_b_noisy_true_pos\": [ ");
+        for (var j = 0; j < b_noisy_pos.length; j++) {
+            if (j != b_noisy_pos.length - 1) {
+                file_params.write("[\"" + BigInt(b_noisy_pos[j]) + "\"],");
+            } else {
+                file_params.write("[\"" + BigInt(b_noisy_pos[j]) + "\"]");
+            }
         }
-    }
-    file_params.write(" ],\n");
-    //write b_NOISY_SIGN
-    file_params.write("  \"in_b_noisy_true_sign\": [ ");
-    for (var j = 0; j < b_noisy_sign.length; j++) {
-        if (j != b_noisy_sign.length - 1) {
-            file_params.write("[" + b_noisy_sign[j] + "],");
-        } else {
-            file_params.write("[" + b_noisy_sign[j] + "]");
+        file_params.write(" ],\n");
+        //write b_NOISY_SIGN
+        file_params.write("  \"in_b_noisy_true_sign\": [ ");
+        for (var j = 0; j < b_noisy_sign.length; j++) {
+            if (j != b_noisy_sign.length - 1) {
+                file_params.write("[" + b_noisy_sign[j] + "],");
+            } else {
+                file_params.write("[" + b_noisy_sign[j] + "]");
+            }
         }
-    }
-    file_params.write(" ],\n");
-
-    //write require_meanxn_acc
-    file_params.write("  \"in_require_meanxn_acc\": \"" + require_meanxn_acc + "\",\n");
-
-    //write require_varxn_acc
-    file_params.write("  \"in_require_varxn_acc\": \"" + require_varxn_acc + "\",\n");
-
-    //write require_XX_acc
-    file_params.write("  \"in_require_XX_acc\": \"" + require_XX_acc + "\",\n");
-
-    //write require_XX_inv_maxnorm
-    file_params.write("  \"in_require_XX_inv_maxnorm\": \"" + require_XX_inv_maxnorm + "\",\n");
-
-    //write require_X_trans_Y_maxnorm
-    file_params.write("  \"in_require_X_trans_Y_maxnorm\": \"" + require_X_trans_Y_maxnorm + "\",\n");
-
-    //write require_b_noisy_acc
-    file_params.write("  \"in_require_b_noisy_acc\": \"" + require_b_noisy_acc + "\"\n");
-
-    file_params.write("}");
-    file_params.end();
+        file_params.write(" ],\n");
+    
+        //write require_meanxn_acc
+        file_params.write("  \"in_require_meanxn_acc\": \"" + require_meanxn_acc + "\",\n");
+    
+        //write require_varxn_acc
+        file_params.write("  \"in_require_varxn_acc\": \"" + require_varxn_acc + "\",\n");
+    
+        //write require_XX_acc
+        file_params.write("  \"in_require_XX_acc\": \"" + require_XX_acc + "\",\n");
+    
+        //write require_XX_inv_maxnorm
+        file_params.write("  \"in_require_XX_inv_maxnorm\": \"" + require_XX_inv_maxnorm + "\",\n");
+    
+        //write require_X_trans_Y_maxnorm
+        file_params.write("  \"in_require_X_trans_Y_maxnorm\": \"" + require_X_trans_Y_maxnorm + "\",\n");
+    
+        //write require_b_noisy_acc
+        file_params.write("  \"in_require_b_noisy_acc\": \"" + require_b_noisy_acc + "\"\n");
+    
+        file_params.write("}");
+        file_params.end();
 
 
     //
@@ -351,162 +352,162 @@ async function generate_ZKPinputs(l) {
     file_cost.on('error', function (err) { /* error handling */});
     file_cost.write("{\n");
 
-    //private inputs
-
-    //write X_ROUND_POS
-    file_cost.write("  \"in_x_pos\":\n    [\n");
-    for (var j = 0; j < x_round_pos.length; j++) {
-        if (j != k - 1) {
-            file_cost.write("      [" + x_round_pos[j] + "],\n");
-        } else {
-            file_cost.write("      [" + x_round_pos[j] + "]\n");
+        //private inputs
+    
+        //write X_ROUND_POS
+        file_cost.write("  \"in_x_pos\":\n    [\n");
+        for (var j = 0; j < x_round_pos.length; j++) {
+            if (j != k - 1) {
+                file_cost.write("      [" + x_round_pos[j] + "],\n");
+            } else {
+                file_cost.write("      [" + x_round_pos[j] + "]\n");
+            }
         }
-    }
-    file_cost.write("    ],\n");
-    //write X_ROUND_SIGN
-    file_cost.write("  \"in_x_sign\":\n    [\n");
-    for (var j = 0; j < x_round_sign.length; j++) {
-        if (j != k - 1) {
-            file_cost.write("      [" + x_round_sign[j] + "],\n");
-        } else {
-            file_cost.write("      [" + x_round_sign[j] + "]\n");
+        file_cost.write("    ],\n");
+        //write X_ROUND_SIGN
+        file_cost.write("  \"in_x_sign\":\n    [\n");
+        for (var j = 0; j < x_round_sign.length; j++) {
+            if (j != k - 1) {
+                file_cost.write("      [" + x_round_sign[j] + "],\n");
+            } else {
+                file_cost.write("      [" + x_round_sign[j] + "]\n");
+            }
         }
-    }
-    file_cost.write("    ],\n");
-
-    //write y_ROUND_POS
-    file_cost.write("  \"in_y_pos\": [ ");
-    for (var j = 0; j < y_round_pos.length; j++) {
-        if (j != y_round_pos.length - 1) {
-            file_cost.write("[" + y_round_pos[j] + "],");
-        } else {
-            file_cost.write("[" + y_round_pos[j] + "]");
+        file_cost.write("    ],\n");
+    
+        //write y_ROUND_POS
+        file_cost.write("  \"in_y_pos\": [ ");
+        for (var j = 0; j < y_round_pos.length; j++) {
+            if (j != y_round_pos.length - 1) {
+                file_cost.write("[" + y_round_pos[j] + "],");
+            } else {
+                file_cost.write("[" + y_round_pos[j] + "]");
+            }
         }
-    }
-    file_cost.write("  ],\n");
-    //write y_ROUND_SIGN
-    file_cost.write("  \"in_y_sign\": [ ");
-    for (var j = 0; j < y_round_sign.length; j++) {
-        if (j != y_round_sign.length - 1) {
-            file_cost.write("[" + y_round_sign[j] + "],");
-        } else {
-            file_cost.write("[" + y_round_sign[j] + "]");
+        file_cost.write("  ],\n");
+        //write y_ROUND_SIGN
+        file_cost.write("  \"in_y_sign\": [ ");
+        for (var j = 0; j < y_round_sign.length; j++) {
+            if (j != y_round_sign.length - 1) {
+                file_cost.write("[" + y_round_sign[j] + "],");
+            } else {
+                file_cost.write("[" + y_round_sign[j] + "]");
+            }
         }
-    }
-    file_cost.write(" ],\n");
-
-    //write b_ROUND_POS
-    file_cost.write("  \"in_b_true_pos\": [ ");
-    for (var j = 0; j < b_round_pos.length; j++) {
-        if (j != b_round_pos.length - 1) {
-            file_cost.write("[" + Math.round(b_round_pos[j] / 10**(2*dec)) + "],");
-        } else {
-            file_cost.write("[" + Math.round(b_round_pos[j] / 10**(2*dec))+ "]");
+        file_cost.write(" ],\n");
+    
+        //write b_ROUND_POS
+        file_cost.write("  \"in_b_true_pos\": [ ");
+        for (var j = 0; j < b_round_pos.length; j++) {
+            if (j != b_round_pos.length - 1) {
+                file_cost.write("[" + Math.round(b_round_pos[j] / 10**(2*dec)) + "],");
+            } else {
+                file_cost.write("[" + Math.round(b_round_pos[j] / 10**(2*dec))+ "]");
+            }
         }
-    }
-    file_cost.write(" ],\n");
-    //write b_ROUND_SIGN
-    file_cost.write("  \"in_b_true_sign\": [ ");
-    for (var j = 0; j < b_round_sign.length; j++) {
-        if (j != b_round_sign.length - 1) {
-            file_cost.write("[" + b_round_sign[j] + "],");
-        } else {
-            file_cost.write("[" + b_round_sign[j] + "]");
+        file_cost.write(" ],\n");
+        //write b_ROUND_SIGN
+        file_cost.write("  \"in_b_true_sign\": [ ");
+        for (var j = 0; j < b_round_sign.length; j++) {
+            if (j != b_round_sign.length - 1) {
+                file_cost.write("[" + b_round_sign[j] + "],");
+            } else {
+                file_cost.write("[" + b_round_sign[j] + "]");
+            }
         }
-    }
-    file_cost.write(" ],\n");
-
-    //write XX_INV_ROUND_POS
-    file_cost.write("  \"in_xx_inv_pos\":\n    [\n");
-    for (var j = 0; j < xx_inv_round_pos.length; j++) {
-        if (j != k - 1) {
-            file_cost.write("      [" + xx_inv_round_pos[j] + "],\n");
-        } else {
-            file_cost.write("      [" + xx_inv_round_pos[j] + "]\n");
+        file_cost.write(" ],\n");
+    
+        //write XX_INV_ROUND_POS
+        file_cost.write("  \"in_xx_inv_pos\":\n    [\n");
+        for (var j = 0; j < xx_inv_round_pos.length; j++) {
+            if (j != k - 1) {
+                file_cost.write("      [" + xx_inv_round_pos[j] + "],\n");
+            } else {
+                file_cost.write("      [" + xx_inv_round_pos[j] + "]\n");
+            }
         }
-    }
-    file_cost.write("    ],\n");
-    //write XX_INV_ROUND_SIGN
-    file_cost.write("  \"in_xx_inv_sign\":\n    [\n");
-    for (var j = 0; j < xx_inv_round_sign.length; j++) {
-        if (j != k - 1) {
-            file_cost.write("      [" + xx_inv_round_sign[j] + "],\n");
-        } else {
-            file_cost.write("      [" + xx_inv_round_sign[j] + "]\n");
+        file_cost.write("    ],\n");
+        //write XX_INV_ROUND_SIGN
+        file_cost.write("  \"in_xx_inv_sign\":\n    [\n");
+        for (var j = 0; j < xx_inv_round_sign.length; j++) {
+            if (j != k - 1) {
+                file_cost.write("      [" + xx_inv_round_sign[j] + "],\n");
+            } else {
+                file_cost.write("      [" + xx_inv_round_sign[j] + "]\n");
+            }
         }
-    }
-    file_cost.write("    ],\n");
-
-    //public inputs
-
-    //write X_TEST_ROUND_POS
-    file_cost.write("  \"in_x_test_pos\":\n    [\n");
-    for (var j = 0; j < x_test_round_pos.length; j++) {
-        if (j != k - 1) {
-            file_cost.write("      [" + x_test_round_pos[j] + "],\n");
-        } else {
-            file_cost.write("      [" + x_test_round_pos[j] + "]\n");
+        file_cost.write("    ],\n");
+    
+        //public inputs
+    
+        //write X_TEST_ROUND_POS
+        file_cost.write("  \"in_x_test_pos\":\n    [\n");
+        for (var j = 0; j < x_test_round_pos.length; j++) {
+            if (j != k - 1) {
+                file_cost.write("      [" + x_test_round_pos[j] + "],\n");
+            } else {
+                file_cost.write("      [" + x_test_round_pos[j] + "]\n");
+            }
         }
-    }
-    file_cost.write("    ],\n");
-    //write X_TEST_ROUND_SIGN
-    file_cost.write("  \"in_x_test_sign\":\n    [\n");
-    for (var j = 0; j < x_test_round_sign.length; j++) {
-        if (j != k - 1) {
-            file_cost.write("      [" + x_test_round_sign[j] + "],\n");
-        } else {
-            file_cost.write("      [" + x_test_round_sign[j] + "]\n");
+        file_cost.write("    ],\n");
+        //write X_TEST_ROUND_SIGN
+        file_cost.write("  \"in_x_test_sign\":\n    [\n");
+        for (var j = 0; j < x_test_round_sign.length; j++) {
+            if (j != k - 1) {
+                file_cost.write("      [" + x_test_round_sign[j] + "],\n");
+            } else {
+                file_cost.write("      [" + x_test_round_sign[j] + "]\n");
+            }
         }
-    }
-    file_cost.write("    ],\n");
-
-    //write y_TEST_ROUND_POS
-    file_cost.write("  \"in_y_test_pos\": [ ");
-    for (var j = 0; j < y_test_round_pos.length; j++) {
-        if (j != y_test_round_pos.length - 1) {
-            file_cost.write("[" + y_test_round_pos[j] + "],");
-        } else {
-            file_cost.write("[" + y_test_round_pos[j] + "]");
+        file_cost.write("    ],\n");
+    
+        //write y_TEST_ROUND_POS
+        file_cost.write("  \"in_y_test_pos\": [ ");
+        for (var j = 0; j < y_test_round_pos.length; j++) {
+            if (j != y_test_round_pos.length - 1) {
+                file_cost.write("[" + y_test_round_pos[j] + "],");
+            } else {
+                file_cost.write("[" + y_test_round_pos[j] + "]");
+            }
         }
-    }
-    file_cost.write("  ],\n");
-    //write y_TEST_ROUND_SIGN
-    file_cost.write("  \"in_y_test_sign\": [ ");
-    for (var j = 0; j < y_test_round_sign.length; j++) {
-        if (j != y_test_round_sign.length - 1) {
-            file_cost.write("[" + y_test_round_sign[j] + "],");
-        } else {
-            file_cost.write("[" + y_test_round_sign[j] + "]");
+        file_cost.write("  ],\n");
+        //write y_TEST_ROUND_SIGN
+        file_cost.write("  \"in_y_test_sign\": [ ");
+        for (var j = 0; j < y_test_round_sign.length; j++) {
+            if (j != y_test_round_sign.length - 1) {
+                file_cost.write("[" + y_test_round_sign[j] + "],");
+            } else {
+                file_cost.write("[" + y_test_round_sign[j] + "]");
+            }
         }
-    }
-    file_cost.write(" ],\n");
-
-    //write cost_submitted
-    file_cost.write("  \"in_cost_submitted\": \"" + BigInt(_cost) + "\",\n");
-
-    //write k
-    file_cost.write("  \"in_k\": " + k + ",\n");
-
-    //write n
-    file_cost.write("  \"in_n\": " + n + ",\n");
-
-    //write n_test
-    file_cost.write("  \"in_n_test\": " + n_test + ",\n");
-
-    //write dec
-    file_cost.write("  \"in_dec\": " + dec + ",\n");
-
-    //write xy_merkleroot
-    file_cost.write("  \"in_xy_merkleroot\": \"" + xy_tree.root + "\",\n");
-
-    //write test_merkleroot
-    file_cost.write("  \"in_test_merkleroot\": \"" + test_tree.root + "\",\n");
-
-    //write require_b_acc
-    file_cost.write("  \"in_require_b_acc\": " + require_b_noisy_acc + "\n");
-
-    file_cost.write("}");
-    file_cost.end();
+        file_cost.write(" ],\n");
+    
+        //write cost_submitted
+        file_cost.write("  \"in_cost_submitted\": \"" + BigInt(_cost) + "\",\n");
+    
+        //write k
+        file_cost.write("  \"in_k\": " + k + ",\n");
+    
+        //write n
+        file_cost.write("  \"in_n\": " + n + ",\n");
+    
+        //write n_test
+        file_cost.write("  \"in_n_test\": " + n_test + ",\n");
+    
+        //write dec
+        file_cost.write("  \"in_dec\": " + dec + ",\n");
+    
+        //write merkleroot_train
+        file_cost.write("  \"in_merkleroot_train\": \"" + train_tree.root + "\",\n");
+    
+        //write merkleroot_test
+        file_cost.write("  \"in_merkleroot_test\": \"" + test_tree.root + "\",\n");
+    
+        //write require_b_acc
+        file_cost.write("  \"in_require_b_acc\": " + require_b_acc + "\n");
+    
+        file_cost.write("}");
+        file_cost.end();
 }
 
 function signify(x) {

@@ -1,8 +1,8 @@
-const cost_calc = require('./cost_experimental');
+const cost_calc = require('./cost_experimental_v3');
 const matrixmath = require ("mathjs");
 const nplot = require('nodeplotlib');
 
-exec(100, 200)
+exec(10, 200)
 
 async function exec(number_of_tests, n_client) {
 
@@ -107,13 +107,13 @@ async function exec(number_of_tests, n_client) {
     }
 
     //Euclidean distances
-        //mean
+    //mean
     let EuDist_mean_benchmark_private = matrixmath.mean(EuDist[0]);
     let EuDist_mean_benchmark_LOOsmall_train = matrixmath.mean(EuDist[1]);
     let EuDist_mean_benchmark_LOOsmall_test = matrixmath.mean(EuDist[2]);
     let EuDist_mean_benchmark_LOOlarge = matrixmath.mean(EuDist[3]);
     let EuDist_mean_benchmark_random = matrixmath.mean(EuDist[4]);
-        //variance
+    //variance
     let EuDist_var_benchmark_private = matrixmath.variance(EuDist[0], 'uncorrected');
     let EuDist_var_benchmark_LOOsmall_train = matrixmath.variance(EuDist[1], 'uncorrected');
     let EuDist_var_benchmark_LOOsmall_test = matrixmath.variance(EuDist[2], 'uncorrected');
@@ -121,13 +121,13 @@ async function exec(number_of_tests, n_client) {
     let EuDist_var_benchmark_random = matrixmath.variance(EuDist[4], 'uncorrected');
 
     //Correlation
-        //mean
+    //mean
     let corr_mean_benchmark_private = matrixmath.mean(corr[0]);
     let corr_mean_benchmark_LOOsmall_train = matrixmath.mean(corr[1]);
     let corr_mean_benchmark_LOOsmall_test = matrixmath.mean(corr[2]);
     let corr_mean_benchmark_LOOlarge = matrixmath.mean(corr[3]);
     let corr_mean_benchmark_random = matrixmath.mean(corr[4]);
-        //variance
+    //variance
     let corr_var_benchmark_private = matrixmath.variance(corr[0], 'uncorrected');
     let corr_var_benchmark_LOOsmall_train = matrixmath.variance(corr[1], 'uncorrected');
     let corr_var_benchmark_LOOsmall_test = matrixmath.variance(corr[2], 'uncorrected');

@@ -15,9 +15,9 @@ template SigSum(n) {
 
 
 template SigSumNeg(n) {
-    signal input in[n];
+    signal input in_pos[n];
     signal input in_sign[n];
-    signal output out;
+    signal output out_pos;
     signal output out_sign;
     // sign: 0 for positive | 1 for negative
 
@@ -26,7 +26,7 @@ template SigSumNeg(n) {
     signal multi_in[n];
     for (var i = 0; i < n; i++) {
         multi_in[i] <== 1 - 2 * in_sign[i];
-        sig_in[i] <== multi_in[i] * in[i];
+        sig_in[i] <== multi_in[i] * in_pos[i];
     }
 
     //calculate sum
@@ -39,7 +39,7 @@ template SigSumNeg(n) {
     //handle negative values and assign outputs
     out_sign <-- tmp[n-1] < 0;
     out_sign * (out_sign - 1) === 0;
-    out <== tmp[n-1] + (-2 * out_sign * tmp[n-1]);
+    out_pos <== tmp[n-1] + (-2 * out_sign * tmp[n-1]);
 }
 
 

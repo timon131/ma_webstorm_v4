@@ -87,6 +87,7 @@ template DP_GetRandomVar(k, var_acc) {
 
 //component main = DP_GetRandomVar(5, 100);
 
+
 ////////////////////////////////////
 
 /*
@@ -137,7 +138,7 @@ template DP_CalculateB(k, hash_alg, DP_acc) {
     }
 
     //
-    // 2. step | get RandVars
+    // 2. step | get random variables
     //
 
     //assign DP_GetRandomVar inputs

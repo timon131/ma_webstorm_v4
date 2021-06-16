@@ -40,7 +40,7 @@
 ///////////////////////////////////
 
 include "range.circom";
-include "multiply-xx.circom";
+include "multiply_xx.circom";
 include "matrixnorms.circom";
 
 template XX_RangeProof(k, n, require_XX_acc, dec) {

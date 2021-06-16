@@ -69,26 +69,17 @@ template Multiply_XX(k, n) {
     // assign inputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            xx_mult.in_a[j][i] <== in_x_pos[j][i];
+            xx_mult.in_a_pos[j][i] <== in_x_pos[j][i];
             xx_mult.in_a_sign[j][i] <== in_x_sign[j][i];
         }
     }
     for (var j = 0; j < n; j++) {
         for (var i = 0; i < k; i++) {
-            xx_mult.in_b[j][i] <== x_trans_pos[j][i];
+            xx_mult.in_b_pos[j][i] <== x_trans_pos[j][i];
             xx_mult.in_b_sign[j][i] <== x_trans_sign[j][i];
         }
     }
 
-    // get xx and assign outputs
-    signal xx_pos[k][k];
-    signal xx_sign[k][k];
-    for (var j = 0; j < k; j++) {
-        for (var i = 0; i < k; i++) {
-            xx_mult.out[j][i] ==> xx_pos[j][i];
-            xx_mult.out_sign[j][i] ==> xx_sign[j][i];
-        }
-    }
 
     //
     // 3. step | multiply: OUT (k x k) = XX (k x k) * XX_INV (k x k)
@@ -99,9 +90,9 @@ template Multiply_XX(k, n) {
     //assign inputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
-            out_mult.in_a[j][i] <== xx_pos[j][i];
-            out_mult.in_a_sign[j][i] <== xx_sign[j][i];
-            out_mult.in_b[j][i] <== in_xx_inv_pos[j][i];
+            out_mult.in_a_pos[j][i] <== xx_mult.out_pos[j][i];
+            out_mult.in_a_sign[j][i] <== xx_mult.out_sign[j][i];
+            out_mult.in_b_pos[j][i] <== in_xx_inv_pos[j][i];
             out_mult.in_b_sign[j][i] <== in_xx_inv_sign[j][i];
         }
     }
@@ -109,7 +100,7 @@ template Multiply_XX(k, n) {
     //get outputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
-            out_pos[j][i] <== out_mult.out[j][i];
+            out_pos[j][i] <== out_mult.out_pos[j][i];
             out_sign[j][i] <== out_mult.out_sign[j][i];
         }
     }

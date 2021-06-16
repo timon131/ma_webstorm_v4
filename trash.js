@@ -22,7 +22,7 @@ let b = {
 let data = [a, b];
 
 plotly.newPlot('myDiv', data);
-*/
+
 let x1 = [3, 12, 1, 4];
 let x2 = [3, 11, 1, 4];
 let x3 = [1,2,3,4,5,6,7,8,9,10,2,3,4,5,6,7,8,9,3,4,5,6,7,8,4,5,6,7,5,6]
@@ -51,3 +51,14 @@ let layout = {
 nplot.stack(data, layout);
 nplot.stack(data2, layout)
 nplot.plot()
+*/
+
+let x = [
+    [1, 2, 3, 4, 5],
+    [1, 2, 3, 4, 5],
+    [1, 2, 3, 4, 5],
+    [1, 2, 3, 4, 5]
+];
+let y = NaN
+
+console.log(matrixmath.mean(x, 0))

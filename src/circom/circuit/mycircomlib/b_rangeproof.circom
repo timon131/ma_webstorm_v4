@@ -31,32 +31,33 @@ template b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc) {
     //assign inputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
-            XXX_mult.in_a[j][i] <== in_xx_inv_pos[j][i];
+            XXX_mult.in_a_pos[j][i] <== in_xx_inv_pos[j][i];
             XXX_mult.in_a_sign[j][i] <== in_xx_inv_sign[j][i];
         }
     }
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            XXX_mult.in_b[j][i] <== in_x_pos[j][i];
+            XXX_mult.in_b_pos[j][i] <== in_x_pos[j][i];
             XXX_mult.in_b_sign[j][i] <== in_x_sign[j][i];
         }
     }
+
 
     //
     // 2. step | multiply: b (k x 1) = XXX (k x n) * y (n x 1)
     //
 
-    component y_mult = MatrixMult(n, k, 1);
+    component b_mult = MatrixMult(n, k, 1);
     //assign inputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            y_mult.in_a[j][i] <== XXX_mult.out[j][i];
-            y_mult.in_a_sign[j][i] <== XXX_mult.out_sign[j][i];
+            b_mult.in_a_pos[j][i] <== XXX_mult.out_pos[j][i];
+            b_mult.in_a_sign[j][i] <== XXX_mult.out_sign[j][i];
         }
     }
     for (var i = 0; i < n; i++) {
-        y_mult.in_b[i][0] <== in_y_pos[i][0];
-        y_mult.in_b_sign[i][0] <== in_y_sign[i][0];
+        b_mult.in_b_pos[i][0] <== in_y_pos[i][0];
+        b_mult.in_b_sign[i][0] <== in_y_sign[i][0];
     }
 
 
@@ -71,8 +72,8 @@ template b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc) {
         DP_noise.in_hash_y_pos[j][0] <== in_y_pos[j][0];
         DP_noise.in_hash_y_sign[j][0] <== in_y_sign[j][0];
 
-        DP_noise.in_b_pos[j][0] <== y_mult.out[j][0];
-        DP_noise.in_b_sign[j][0] <== y_mult.out_sign[j][0];
+        DP_noise.in_b_pos[j][0] <== b_mult.out_pos[j][0];
+        DP_noise.in_b_sign[j][0] <== b_mult.out_sign[j][0];
     }
     DP_noise.in_hash_BC <== in_hash_BC;
     DP_noise.in_DP_acc <== in_DP_acc;
@@ -124,8 +125,8 @@ template b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc) {
 }
 
 ////////////////////////////////////////////////
-//TBD: adapt to new range circuit!
-template b_RangeProof(k, n, range_acc_step, hash_alg, dec) {
+
+template b_RangeProof(k, n, require_b_acc, hash_alg, dec) {
     signal input in_x_pos[k][n];
     signal input in_x_sign[k][n];
     signal input in_y_pos[n][1];
@@ -134,8 +135,6 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec) {
     signal input in_b_true_sign[k][1];
     signal input in_xx_inv_pos[k][k];
     signal input in_xx_inv_sign[k][k];
-    //public inputs:
-    signal input range_acc_abs;
     //outputs:
     signal output check_b_minacc;
 
@@ -148,13 +147,13 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec) {
     //assign inputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
-            XXX_mult.in_a[j][i] <== in_xx_inv_pos[j][i];
+            XXX_mult.in_a_pos[j][i] <== in_xx_inv_pos[j][i];
             XXX_mult.in_a_sign[j][i] <== in_xx_inv_sign[j][i];
         }
     }
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            XXX_mult.in_b[j][i] <== in_x_pos[j][i];
+            XXX_mult.in_b_pos[j][i] <== in_x_pos[j][i];
             XXX_mult.in_b_sign[j][i] <== in_x_sign[j][i];
         }
     }
@@ -168,12 +167,12 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec) {
     //assign inputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            b_mult.in_a[j][i] <== XXX_mult.out[j][i];
+            b_mult.in_a_pos[j][i] <== XXX_mult.out_pos[j][i];
             b_mult.in_a_sign[j][i] <== XXX_mult.out_sign[j][i];
         }
     }
     for (var i = 0; i < n; i++) {
-        b_mult.in_b[i][0] <== in_y_pos[i][0];
+        b_mult.in_b_pos[i][0] <== in_y_pos[i][0];
         b_mult.in_b_sign[i][0] <== in_y_sign[i][0];
     }
 
@@ -183,43 +182,43 @@ template b_RangeProof(k, n, range_acc_step, hash_alg, dec) {
     //
 
     //calculate bits
-    var bits = 0;
-    while (2**bits < 10**((dec * 3) + 1)) {
-        bits++;
+    var bits_absdiff_b_range = 0;
+    while ( (2**bits_absdiff_b_range + 3) < 10**((dec * 3) + 1)) {
+        bits_absdiff_b_range++;
     }
 
-    //calculate dec_abs
-    component dec_pow = Power(dec * 2);
-    dec_pow.base <== 10;
-
     // calculate range per element
-    component b_diff[k] = AbsDiff(bits);
-    component b_range[k] = Range(range_acc_step, bits);
+    assert (3*dec >= require_b_acc);
+    component b_range[k] = Range(3*dec, require_b_acc, bits_absdiff_b_range);
+    signal tmp_b[k];
+    signal tmp_in_b_true[k];
     for (var j = 0; j < k; j++) {
-        //check sign
-        b_mult.out_sign[j][0] === in_b_true_sign[j][0];
 
-        //calculate difference
-        b_diff[j].in_a <== b_mult.out[j][0];
-        b_diff[j].in_b <== in_b_true_pos[j][0] * dec_pow.out;
+        //signify
+        tmp_b[j] <== 2 * b_mult.out_sign[j][0] * b_mult.out_pos[j][0];
+        tmp_in_b_true[j] <== 2 * in_b_true_sign[j][0] * in_b_true_pos[j][0];
 
         //calculate range
-        b_range[j].truth <== b_diff[j].out;
-        b_range[j].test <== range_acc_abs;
+        b_range[j].actual <== b_mult.out_pos[j][0] - tmp_b[j];
+        b_range[j].target <== in_b_true_pos[j][0] - tmp_in_b_true[j];
     }
 
     // get smallest element
-    component minelement = VectorNormMinElement(k, dec);
+    var bits_b_minelement = 0;
+    while ( (2**bits_b_minelement + 3) < 3*dec ) {
+        bits_b_minelement++;
+    }
+    component b_minelement = VectorNormMinElement(k, bits_b_minelement);
     for (var j = 0; j < k; j++) {
-        minelement.in[j] <== b_range[j].out;
+        b_minelement.in[j] <== b_range[j].out;
     }
 
     //assign output
-    check_b_minacc <== minelement.out;
+    check_b_minacc <== b_minelement.out;
 }
 
 //component main = b_noisy_RangeProof(5, 20, 3, 1, 5, 100);
 //cf. b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc)
 
 //component main = b_RangeProof(5, 20, 3, 1, 5, 100);
-//cf. b_RangeProof(k, n, range_acc_step, hash_alg, dec, DP_acc)
+//cf. b_RangeProof(k, n, require_b_acc, hash_alg, dec)
