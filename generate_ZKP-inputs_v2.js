@@ -23,7 +23,7 @@ async function generate_ZKPinputs(l) {
     k++;    //account for X: k+1 x n
     const n = 150;
     //const n_test = Math.round(n / 2);
-    const n_test = 10;
+    const n_test = 15;
 
     // define accuracy dec (10**dec)
     const dec = 5;
