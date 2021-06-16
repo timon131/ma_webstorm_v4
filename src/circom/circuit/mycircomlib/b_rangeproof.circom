@@ -187,20 +187,28 @@ template b_RangeProof(k, n, require_b_acc, hash_alg, dec) {
         bits_absdiff_b_range++;
     }
 
+    //calculate dec_abs to scale b_true_pos
+    component pow_scale_b_true = Power(dec * 2);
+    pow_scale_b_true.base <== 10;
+
     // calculate range per element
     assert (3*dec >= require_b_acc);
     component b_range[k] = Range(3*dec, require_b_acc, bits_absdiff_b_range);
-    signal tmp_b[k];
+    signal tmp_b_calculated[k];
+    signal scaled_in_b_true_pos[k];
     signal tmp_in_b_true[k];
     for (var j = 0; j < k; j++) {
 
+        //scale b_true
+        scaled_in_b_true_pos[j] <== in_b_true_pos[j][0] * pow_scale_b_true.out;
+
         //signify
-        tmp_b[j] <== 2 * b_mult.out_sign[j][0] * b_mult.out_pos[j][0];
-        tmp_in_b_true[j] <== 2 * in_b_true_sign[j][0] * in_b_true_pos[j][0];
+        tmp_b_calculated[j] <== 2 * b_mult.out_sign[j][0] * b_mult.out_pos[j][0];
+        tmp_in_b_true[j] <== 2 * in_b_true_sign[j][0] * scaled_in_b_true_pos[j];
 
         //calculate range
-        b_range[j].actual <== b_mult.out_pos[j][0] - tmp_b[j];
-        b_range[j].target <== in_b_true_pos[j][0] - tmp_in_b_true[j];
+        b_range[j].actual <== b_mult.out_pos[j][0] - tmp_b_calculated[j];
+        b_range[j].target <== scaled_in_b_true_pos[j] - tmp_in_b_true[j];
     }
 
     // get smallest element

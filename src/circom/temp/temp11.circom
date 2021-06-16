@@ -89,8 +89,6 @@ template b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc) {
     signal tmp_DP_noise_out_b[k];
     signal tmp_in_b_noisy_true[k];
     for (var j = 0; j < k; j++) {
-        //check sign --> changed to signify and then check, since for small betas, sign might be different even though computation is correct!
-        //DP_noise.out_b_sign[j][0] === in_b_noisy_true_sign[j][0];
 
         //signify
         tmp_DP_noise_out_b[j] <== 2 * DP_noise.out_b_sign[j][0] * DP_noise.out_b_pos[j][0];
@@ -117,5 +115,4 @@ template b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc) {
 
 
 ////////////////////////
-matrixmult
-SigSumNeg
+279703593354276 != 842653546775588

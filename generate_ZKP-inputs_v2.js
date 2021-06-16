@@ -44,7 +44,7 @@ async function generate_ZKPinputs(l) {
     const require_XX_inv_maxnorm = 10 ** (dec);
     const require_X_trans_Y_maxnorm = k * 10 ** ((2*dec) + 3);
     const require_b_noisy_acc = 2;
-    const require_b_acc = 2;
+    const require_b_acc = 3;
 
     //print sizes of input_public.json
     /*
