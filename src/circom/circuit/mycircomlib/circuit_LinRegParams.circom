@@ -25,7 +25,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
     signal input in_k;
     signal input in_n;
     signal input in_dec;
-    signal input in_xy_merkleroot;
+    signal input in_merkleroot_train;
     signal input in_Lap_X_pos[DP_acc - 1];
     signal input in_DP_acc;
     signal input in_hash_BC;
@@ -115,22 +115,22 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
     // 1. step | Check xy_merkleroot
     //
 
-    component xy_merkleproof = MerkleProof_six(k, n, merkle_level, hash_alg);
+    component merkleproof_train = MerkleProof_six(k, n, merkle_level, hash_alg);
 
     //assign inputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            xy_merkleproof.in_x_pos[j][i] <== in_x_pos[j][i];
-            xy_merkleproof.in_x_sign[j][i] <== in_x_sign[j][i];
+            merkleproof_train.in_x_pos[j][i] <== in_x_pos[j][i];
+            merkleproof_train.in_x_sign[j][i] <== in_x_sign[j][i];
         }
     }
     for (var i = 0; i < n; i++) {
-        xy_merkleproof.in_y_pos[i][0] <== in_y_pos[i][0];
-        xy_merkleproof.in_y_sign[i][0] <== in_y_sign[i][0];
+        merkleproof_train.in_y_pos[i][0] <== in_y_pos[i][0];
+        merkleproof_train.in_y_sign[i][0] <== in_y_sign[i][0];
     }
 
     //make sure that root is correct
-    in_xy_merkleroot === xy_merkleproof.out;
+    in_merkleroot_train === merkleproof_train.out;
 
 
     //
@@ -278,8 +278,8 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
     1 === range_b_noisy_acc.out;
 }
 
-component main = LinRegProof(5, 1000, 5, 11, 3, 3, 2,
-    100000, 50000000000000, 2, 1, 100);
+component main = LinRegProof(5, 20, 5, 6, 3, 3, 2,
+    100000, 50000000000000, 3, 1, 100);
 //cf. LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_acc, require_XX_acc,
 //    require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc) {
 

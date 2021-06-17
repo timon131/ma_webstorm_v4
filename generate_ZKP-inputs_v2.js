@@ -21,9 +21,9 @@ async function generate_ZKPinputs(l) {
     // define number of features k and sample size n
     let k = 4;
     k++;    //account for X: k+1 x n
-    const n = 1000;
+    const n = 20;
     //const n_test = Math.round(n / 2);
-    const n_test = 100;
+    const n_test = 10;
 
     // define accuracy dec (10**dec)
     const dec = 5;
@@ -40,19 +40,19 @@ async function generate_ZKPinputs(l) {
     //set accuracies for range proofs
     const require_meanxn_acc = 3;
     const require_varxn_acc = 3;
-    const require_XX_acc = 2;
+    const require_XX_acc = 3;
     const require_XX_inv_maxnorm = 10 ** (dec);
     const require_X_trans_Y_maxnorm = k * 10 ** ((2*dec) + 3);
-    const require_b_noisy_acc = 2;
-    const require_b_acc = 2;
+    const require_b_noisy_acc = 3;
+    const require_b_acc = 3;
 
     //print sizes of input_public.json
-    /*
+
     console.log("size of beta_input_public.json:");
-    console.log(1 + 1 + 1 + 1 + DP_acc - 1 + 1 + 1 + k + k + 1 + 1 + 1 + 1);
+    console.log(1 + 1 + 1 + 1 + (DP_acc-1) + 1 + 1 + k + k + 1 + 1 + 1 + 1 + 1 + 1);
     console.log("size of cost_input_public.json:");
     console.log(8);
-    */
+
 
 
     //
@@ -283,7 +283,7 @@ async function generate_ZKPinputs(l) {
         file_params.write("  \"in_dec\": \"" + dec + "\",\n");
     
         //write merkle root
-        file_params.write("  \"in_xy_merkleroot\": \"" + train_tree.root + "\",\n");
+        file_params.write("  \"in_merkleroot_train\": \"" + train_tree.root + "\",\n");
     
         //write Lap_X_pos
         file_params.write("  \"in_Lap_X_pos\": [");

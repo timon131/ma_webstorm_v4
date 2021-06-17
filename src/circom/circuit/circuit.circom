@@ -16,11 +16,12 @@ template LinRegCost(k, n, n_test, dec, merkle_level_train, merkle_level_test, ha
     signal private input in_b_true_sign[k][1];
     signal private input in_xx_inv_pos[k][k];
     signal private input in_xx_inv_sign[k][k];
-    //public inputs:
+    //test data set is not public to reduce data volume on blockchain
     signal private input in_x_test_pos[k][n_test];
     signal private input in_x_test_sign[k][n_test];
     signal private input in_y_test_pos[n_test][1];
     signal private input in_y_test_sign[n_test][1];
+    //public inputs:
     signal input in_cost_submitted;
     signal input in_k;
     signal input in_n;
@@ -181,5 +182,5 @@ template LinRegCost(k, n, n_test, dec, merkle_level_train, merkle_level_test, ha
     in_cost_submitted === cost_sum.out;
 }
 
-component main = LinRegCost(5, 1000, 100, 5, 11, 8, 1, 2);
+component main = LinRegCost(5, 20, 10, 5, 6, 5, 1, 3);
 //cf. LinRegCost(k, n, n_test, dec, merkle_level_train, merkle_level_test, hash_alg, require_b_acc)
