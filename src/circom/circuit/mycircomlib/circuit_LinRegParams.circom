@@ -1,7 +1,6 @@
 include "../../../circomlib/circuits/comparators.circom";
 include "./mycircomlib/stats.circom";
 include "./mycircomlib/matrixmult.circom";
-include "./mycircomlib/DP_noise.circom";
 include "./mycircomlib/matrixnorms.circom";
 include "./mycircomlib/merkleproof_six.circom";
 include "./mycircomlib/xx_rangeproof.circom";
