@@ -10,7 +10,7 @@ include "./mycircomlib/b_rangeproof.circom";
 /////////////////////////////////////////////////
 
 
-template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_acc, require_XX_acc,
+template LinRegProof(k, n, dec, merkle_level_train, require_meanxn_acc, require_varxn_acc, require_XX_acc,
         require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc) {
 
     signal private input in_x_pos[k][n];
@@ -113,7 +113,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
     // 2. step | Check xy_merkleroot
     //
 
-    component merkleproof_train = MerkleProof_six(k, n, merkle_level, hash_alg);
+    component merkleproof_train = MerkleProof_six(k, n, merkle_level_train, hash_alg);
 
     //assign inputs
     for (var j = 0; j < k; j++) {
@@ -278,7 +278,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
 
 component main = LinRegProof(5, 20, 5, 6, 3, 3, 2,
     100000, 50000000000000, 3, 1, 100);
-//cf. LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_acc, require_XX_acc,
+//cf. LinRegProof(k, n, dec, merkle_level_train, require_meanxn_acc, require_varxn_acc, require_XX_acc,
 //    require_XX_inv_maxnorm, require_X_trans_Y_maxnorm, require_b_noisy_acc, hash_alg, DP_acc) {
 
 // time /bin/bash /home/timmel/WebstormProjects/ma_webstorm_v4/src/circom/circuit/snark_generate-zkey.sh
