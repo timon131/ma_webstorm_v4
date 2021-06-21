@@ -110,7 +110,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
 
 
     //
-    // 1. step | Check xy_merkleroot
+    // 2. step | Check xy_merkleroot
     //
 
     component merkleproof_train = MerkleProof_six(k, n, merkle_level, hash_alg);
@@ -132,7 +132,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
 
 
     //
-    // 2. step | XX range proof
+    // 3. step | XX range proof
     //
 
     //XX range proof
@@ -164,7 +164,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
 
 
     //
-    // 3. step | range proof max element matrix norm for XX_inv
+    // 4. step | range proof max element matrix norm for XX_inv
     //
 
     //get max element
@@ -193,7 +193,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
 
 
     //
-    // 4. step | range proof max element matrix norm for X_trans_Y
+    // 5. step | range proof max element matrix norm for X_trans_Y
     //
 
     // compute X_trans_Y (k x 1) = X (k x n) * Y (n x 1)
@@ -233,36 +233,36 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
 
 
     //
-    // 5. step | b range proof
+    // 6. step | b range proof
     //
 
-    component b_rangeproof = b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc);
+    component b_noisy_rangeproof = b_noisy_RangeProof(k, n, require_b_noisy_acc, hash_alg, dec, DP_acc);
 
     //assign inputs
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < n; i++) {
-            b_rangeproof.in_x_pos[j][i] <== in_x_pos[j][i];
-            b_rangeproof.in_x_sign[j][i] <== in_x_sign[j][i];
+            b_noisy_rangeproof.in_x_pos[j][i] <== in_x_pos[j][i];
+            b_noisy_rangeproof.in_x_sign[j][i] <== in_x_sign[j][i];
         }
     }
     for (var j = 0; j < k; j++) {
         for (var i = 0; i < k; i++) {
-            b_rangeproof.in_xx_inv_pos[j][i] <== in_xx_inv_pos[j][i];
-            b_rangeproof.in_xx_inv_sign[j][i] <== in_xx_inv_sign[j][i];
+            b_noisy_rangeproof.in_xx_inv_pos[j][i] <== in_xx_inv_pos[j][i];
+            b_noisy_rangeproof.in_xx_inv_sign[j][i] <== in_xx_inv_sign[j][i];
         }
     }
     for (var i = 0; i < n; i++) {
-        b_rangeproof.in_y_pos[i][0] <== in_y_pos[i][0];
-        b_rangeproof.in_y_sign[i][0] <== in_y_sign[i][0];
+        b_noisy_rangeproof.in_y_pos[i][0] <== in_y_pos[i][0];
+        b_noisy_rangeproof.in_y_sign[i][0] <== in_y_sign[i][0];
     }
     for (var i = 0; i < (DP_acc - 1); i++) {
-        b_rangeproof.in_Lap_X_pos[i] <== in_Lap_X_pos[i];
+        b_noisy_rangeproof.in_Lap_X_pos[i] <== in_Lap_X_pos[i];
     }
     b_rangeproof.in_hash_BC <== in_hash_BC;
     b_rangeproof.in_DP_acc <== in_DP_acc;
     for (var j = 0; j < k; j++) {
-        b_rangeproof.in_b_noisy_true_pos[j][0] <== in_b_noisy_true_pos[j][0];
-        b_rangeproof.in_b_noisy_true_sign[j][0] <== in_b_noisy_true_sign[j][0];
+        b_noisy_rangeproof.in_b_noisy_true_pos[j][0] <== in_b_noisy_true_pos[j][0];
+        b_noisy_rangeproof.in_b_noisy_true_sign[j][0] <== in_b_noisy_true_sign[j][0];
     }
 
     //check output
@@ -271,7 +271,7 @@ template LinRegProof(k, n, dec, merkle_level, require_meanxn_acc, require_varxn_
         bits_range_b_noisy_acc++;
     }
     component range_b_noisy_acc = GreaterEqThan(require_b_noisy_acc);
-    range_b_noisy_acc.in[0] <== b_rangeproof.check_b_noisy_minacc;
+    range_b_noisy_acc.in[0] <== b_noisy_rangeproof.check_b_noisy_minacc;
     range_b_noisy_acc.in[1] <== in_require_b_noisy_acc;
     1 === range_b_noisy_acc.out;
 }
