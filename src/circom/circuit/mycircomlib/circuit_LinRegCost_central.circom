@@ -121,10 +121,10 @@ template LinRegCost(k, n, n_test, dec, merkle_level_train, merkle_level_test, ha
     while ( (2**bits_range_b_acc + 3) < require_b_acc) {
         bits_range_b_acc++;
     }
-    component range_b_acc = GreaterEqThan(bits_range_b_acc);
-    range_b_acc.in[0] <== b_rangeproof.check_b_minacc;
-    range_b_acc.in[1] <== in_require_b_acc;
-    1 === range_b_acc.out;
+    component range_b_true_acc = GreaterEqThan(bits_range_b_acc);
+    range_b_true_acc.in[0] <== b_rangeproof.check_b_minacc;
+    range_b_true_acc.in[1] <== in_require_b_acc;
+    1 === range_b_true_acc.out;
 
 
     //
