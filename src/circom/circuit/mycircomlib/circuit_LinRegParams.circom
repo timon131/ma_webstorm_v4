@@ -258,8 +258,8 @@ template LinRegProof(k, n, dec, merkle_level_train, require_meanxn_acc, require_
     for (var i = 0; i < (DP_acc - 1); i++) {
         b_noisy_rangeproof.in_Lap_X_pos[i] <== in_Lap_X_pos[i];
     }
-    b_rangeproof.in_hash_BC <== in_hash_BC;
-    b_rangeproof.in_DP_acc <== in_DP_acc;
+    b_noisy_rangeproof.in_hash_BC <== in_hash_BC;
+    b_noisy_rangeproof.in_DP_acc <== in_DP_acc;
     for (var j = 0; j < k; j++) {
         b_noisy_rangeproof.in_b_noisy_true_pos[j][0] <== in_b_noisy_true_pos[j][0];
         b_noisy_rangeproof.in_b_noisy_true_sign[j][0] <== in_b_noisy_true_sign[j][0];
